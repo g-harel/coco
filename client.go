@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/go-github/github"
@@ -10,10 +11,10 @@ import (
 
 type Client struct {
 	client *github.Client
-	name   string
+	names  string
 }
 
-func NewClient(name, token string) *Client {
+func NewClient(token, names string) *Client {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
 	)
@@ -21,27 +22,30 @@ func NewClient(name, token string) *Client {
 
 	return &Client{
 		github.NewClient(tc),
-		name,
+		names,
 	}
 }
 
 func (c *Client) FetchRepos() ([]*Repo, error) {
-	list, _, err := c.client.Repositories.List(
-		context.Background(),
-		c.name,
-		&github.RepositoryListOptions{
-			Type: "all",
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
+	repos := []*Repo{}
 
-	repos := make([]*Repo, len(list))
-	for i, l := range list {
-		repos[i] = &Repo{
-			Owner: l.GetOwner().GetLogin(),
-			Name:  l.GetName(),
+	for _, n := range strings.Split(c.names, ",") {
+		list, _, err := c.client.Repositories.List(
+			context.Background(),
+			n,
+			&github.RepositoryListOptions{
+				Type: "all",
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, l := range list {
+			repos = append(repos, &Repo{
+				Owner: l.GetOwner().GetLogin(),
+				Name:  l.GetName(),
+			})
 		}
 	}
 

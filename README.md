@@ -2,7 +2,7 @@
 
 > track repo traffic through the github api
 
-All user's public repositories are queried.
+All specified users' public repositories are queried.
 
 Repositories with no views will not get displayed.
 
@@ -13,7 +13,7 @@ $ go get -u github.com/g-harel/coco
 ```
 
 ```shell
-$ coco -name="{username}" -token="{access_token}"
+$ coco -names="{username1,orgname1,...}" -token="{access_token}"
 
 +-------------------+-------+-----+--------+-------------------------------------------------------------+
 |       REPO        | VIEWS | DAY | UNIQUE |                            LINK                             |
