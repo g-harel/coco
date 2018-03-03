@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"regexp"
 )
 
 type Repo struct {
@@ -15,7 +16,8 @@ type Repo struct {
 }
 
 func main() {
-	names := flag.String("names", "", "comma-separated list of names (required)")
+	names := flag.String("names", "", "comma-separated list of owner names (required)")
+	exclude := flag.String("exclude", "", "regexp exclusion mask called on each repo \"owner/repo\"")
 	token := flag.String("token", "", "provide api token (required)")
 
 	flag.Parse()
@@ -42,6 +44,13 @@ func main() {
 		visited[r.Owner+r.Name] = true
 		return true
 	})
+
+	if *exclude != "" {
+		pattern := regexp.MustCompile(*exclude)
+		repos = filter(repos, func(r *Repo) bool {
+			return !pattern.Match([]byte(r.Owner + "/" + r.Name))
+		})
+	}
 
 	repos, err = client.FetchTraffic(repos)
 	if err != nil {
