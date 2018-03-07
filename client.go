@@ -70,10 +70,11 @@ func (c *Client) FetchTraffic(repos []*Repo) ([]*Repo, error) {
 				return
 			}
 
-			today := 0
+			var today int
 			for _, td := range v.Views {
 				if isToday(td.Timestamp) {
-					today++
+					today = *td.Count
+					break
 				}
 			}
 
