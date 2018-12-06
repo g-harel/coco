@@ -2,19 +2,27 @@
 
 > track repo traffic through the github api
 
-All specified users' public repositories are queried.
-
-Repositories with no views will not get displayed.
+Repositories with no views (in the past 14 days) will not get displayed.
 
 ## Usage
 
-```shell
+```
 $ go get -u github.com/g-harel/coco
 ```
 
-```shell
-$ coco -names="{username1,orgname1,...}" -token="{access_token}"
+```
+Usage: coco [USER]...
+List repository traffic for USER(s).
 
+Examples:
+  coco username
+  coco orgname username
+
+Looks for GitHub api key in GITHUB_API_TOKEN environment variable.
+Traffic can only be collected from repositories that your account has push access to.
+```
+
+```
 +-------------------+-------+-----+--------+-------------------------------------------------------------+
 |       REPO        | VIEWS | DAY | UNIQUE |                            LINK                             |
 +-------------------+-------+-----+--------+-------------------------------------------------------------+

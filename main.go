@@ -1,12 +1,13 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"regexp"
+	"os"
+	"strings"
 )
 
-type Repo struct {
+// Repository represents metadata about a single repository.
+type Repository struct {
 	Name   string
 	Owner  string
 	Views  int
@@ -16,28 +17,39 @@ type Repo struct {
 }
 
 func main() {
-	names := flag.String("names", "", "comma-separated list of owner names (required)")
-	exclude := flag.String("exclude", "", "regexp exclusion mask called on each repo \"owner/repo\"")
-	token := flag.String("token", "", "provide api token (required)")
+	users := os.Args[1:]
+	if len(users) == 0 {
+		fmt.Println(strings.TrimSpace(`
+Usage: coco [USER]...
+List repository traffic for USER(s).
 
-	flag.Parse()
+Examples:
+  coco username
+  coco orgname username
 
-	if *names == "" || *token == "" {
-		fmt.Println("Usage of coco:")
-		flag.PrintDefaults()
+Looks for GitHub api key in GITHUB_API_TOKEN environment variable.
+Traffic can only be collected from repositories that your account has push access to.
+		`))
 		return
 	}
 
-	client := NewClient(*token, *names)
-
-	repos, err := client.FetchRepos()
-	if err != nil {
-		panic(err)
+	token, ok := os.LookupEnv("GITHUB_API_TOKEN")
+	if !ok {
+		fmt.Fprintln(os.Stderr, "Missing GITHUB_API_TOKEN environment variable.")
+		os.Exit(1)
 	}
 
-	// remove duplicate repos
+	client := NewClient(token)
+
+	repos, err := client.Repositories(users)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "fetch repositories: %v", err)
+		os.Exit(1)
+	}
+
+	// Remove duplicate repositories (usernames might have overlap).
 	visited := make(map[string]bool)
-	repos = filter(repos, func(r *Repo) bool {
+	repos = repos.Filter(func(r *Repository) bool {
 		if visited[r.Owner+r.Name] {
 			return false
 		}
@@ -45,32 +57,17 @@ func main() {
 		return true
 	})
 
-	if *exclude != "" {
-		pattern := regexp.MustCompile(*exclude)
-		repos = filter(repos, func(r *Repo) bool {
-			return !pattern.Match([]byte(r.Owner + "/" + r.Name))
-		})
-	}
+	// Fetch traffic data for all repositories.
+	repos = client.Traffic(repos)
 
-	repos, err = client.FetchTraffic(repos)
-	if err != nil {
-		panic(err)
-	}
-
-	// only show repos with views
-	repos = filter(repos, func(r *Repo) bool {
-		return r.Views > 0
+	// Remove repos with errors or no reported views (in the past two weeks).
+	repos = repos.Filter(func(r *Repository) bool {
+		if r.Error != nil {
+			// Fetching errors are swallowed to avoid crowding the output (subject to change).
+			return false
+		}
+		return r.Views != 0
 	})
 
-	NewTrafficTable(repos).Print()
-}
-
-func filter(repos []*Repo, f func(*Repo) bool) []*Repo {
-	rs := []*Repo{}
-	for _, r := range repos {
-		if f(r) {
-			rs = append(rs, r)
-		}
-	}
-	return rs
+	fmt.Print(repos.String())
 }
