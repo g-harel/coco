@@ -90,11 +90,10 @@ func (c *Client) Traffic(repos Repositories) Repositories {
 			}
 
 			// Traffic from today is highlighted.
-			var trafficToday *github.TrafficData
+			var trafficToday int
 			for _, stat := range traffic.Views {
 				if isToday(stat.GetTimestamp()) {
-					trafficToday = stat
-					break
+					trafficToday += stat.GetCount()
 				}
 			}
 
@@ -102,7 +101,7 @@ func (c *Client) Traffic(repos Repositories) Repositories {
 				Name:   repos[i].Name,
 				Owner:  repos[i].Owner,
 				Views:  traffic.GetCount(),
-				Today:  trafficToday.GetCount(),
+				Today:  trafficToday,
 				Unique: traffic.GetUniques(),
 			}
 		}(i)
@@ -117,7 +116,6 @@ func (c *Client) Traffic(repos Repositories) Repositories {
 }
 
 func isToday(t github.Timestamp) bool {
-	y, m, d := time.Now().Date()
-	cy, cm, cd := t.Date()
-	return y == cy && m == cm && d == cd
+	delta := time.Now().Unix() - t.Unix()
+	return delta <= 24*60*60
 }
