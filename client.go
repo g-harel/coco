@@ -116,6 +116,6 @@ func (c *Client) Traffic(repos Repositories) Repositories {
 }
 
 func isToday(t github.Timestamp) bool {
-	delta := time.Now().Unix() - t.Unix()
-	return delta <= 24*60*60
+	f := "2006-01-02"
+	return time.Now().Format(f) == t.Format(f)
 }
