@@ -4,17 +4,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
-)
 
-// Repository represents metadata about a single repository.
-type Repository struct {
-	Name   string
-	Owner  string
-	Views  int
-	Today  int
-	Unique int
-	Error  error
-}
+	"github.com/g-harel/coco/github"
+)
 
 func main() {
 	users := os.Args[1:]
@@ -39,9 +31,13 @@ Traffic can only be collected from repositories that your account has push acces
 		os.Exit(1)
 	}
 
-	client := NewClient(token)
+	fmt.Print(githubRepositories(token, users).String())
+}
 
-	repos, err := client.Repositories(users)
+func githubRepositories(token string, users []string) github.Repositories {
+	gh := github.NewClient(token)
+
+	repos, err := gh.Repositories(users)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "fetch repositories: %v", err)
 		os.Exit(1)
@@ -49,7 +45,7 @@ Traffic can only be collected from repositories that your account has push acces
 
 	// Remove duplicate repositories (usernames might have overlap).
 	visited := make(map[string]bool)
-	repos = repos.Filter(func(r *Repository) bool {
+	repos = repos.Filter(func(r *github.Repository) bool {
 		if visited[r.Owner+r.Name] {
 			return false
 		}
@@ -58,10 +54,10 @@ Traffic can only be collected from repositories that your account has push acces
 	})
 
 	// Fetch traffic data for all repositories.
-	repos = client.Traffic(repos)
+	repos = gh.Traffic(repos)
 
 	// Remove repos with errors or no reported views (in the past two weeks).
-	repos = repos.Filter(func(r *Repository) bool {
+	repos = repos.Filter(func(r *github.Repository) bool {
 		if r.Error != nil {
 			// Fetching errors are swallowed to avoid crowding the output (subject to change).
 			return false
@@ -69,5 +65,5 @@ Traffic can only be collected from repositories that your account has push acces
 		return r.Views != 0
 	})
 
-	fmt.Print(repos.String())
+	return repos
 }

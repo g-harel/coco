@@ -1,4 +1,4 @@
-package main
+package github
 
 import (
 	"bytes"
@@ -8,6 +8,16 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 )
+
+// Repository represents metadata about a single repository.
+type Repository struct {
+	Name   string
+	Owner  string
+	Views  int
+	Today  int
+	Unique int
+	Error  error
+}
 
 // Repositories represents a slice of repositories.
 type Repositories []*Repository
