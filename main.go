@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/g-harel/coco/github"
+	"github.com/g-harel/coco/npm"
 )
 
 func main() {
@@ -32,6 +33,14 @@ Traffic can only be collected from repositories that your account has push acces
 	}
 
 	fmt.Print(githubRepositories(token, users).String())
+
+	//
+	p, _ := npm.Packages("g-harel")
+	for i := 0; i < len(p); i++ {
+		d, _ := npm.Package(p[i])
+		fmt.Println(p[i], d.Downloads[len(d.Downloads)-1].Downloads)
+	}
+
 }
 
 func githubRepositories(token string, users []string) github.Repositories {
