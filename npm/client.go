@@ -27,7 +27,7 @@ type PackageData struct {
 }
 
 func fetchUserPage(user string, page int) (*UserPage, error) {
-	u, err := url.Parse(fmt.Sprintf("https://www.npmjs.com/~%v?page=0", user))
+	u, err := url.Parse(fmt.Sprintf("https://www.npmjs.com/~%v?page=%v", user, page))
 	if err != nil {
 		return nil, err
 	}
@@ -53,22 +53,30 @@ func fetchUserPage(user string, page int) (*UserPage, error) {
 }
 
 func Packages(user string) ([]string, error) {
-	total := 1
-	page := 0
-	perPage := 0
-	packages := []string{}
-	for (page+1)*perPage < total {
-		p, err := fetchUserPage(user, page)
+	firstPage, err := fetchUserPage(user, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	totalPages := firstPage.Packages.Total/firstPage.Pagination.PerPage + 1
+	pages := []*UserPage{firstPage}
+
+	for i := 1; i < totalPages; i++ {
+		nthPage, err := fetchUserPage(user, i)
 		if err != nil {
-			return nil, err
+			fmt.Printf("failed to fetch page %v: %v", i, err)
 		}
-		total = p.Packages.Total
-		page = p.Pagination.Page
-		perPage = p.Pagination.PerPage
-		for i := 0; i < len(p.Packages.Objects); i++ {
-			packages = append(packages, p.Packages.Objects[i].Name)
+		pages = append(pages, nthPage)
+	}
+
+	packages := []string{}
+	for i := 0; i < len(pages); i++ {
+		page := pages[i]
+		for j := 0; j < len(page.Packages.Objects); j++ {
+			packages = append(packages, page.Packages.Objects[j].Name)
 		}
 	}
+
 	return packages, nil
 }
 

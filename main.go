@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/g-harel/coco/github"
 	"github.com/g-harel/coco/npm"
@@ -35,11 +36,28 @@ Traffic can only be collected from repositories that your account has push acces
 	fmt.Print(githubRepositories(token, users).String())
 
 	//
-	p, _ := npm.Packages("g-harel")
-	for i := 0; i < len(p); i++ {
-		d, _ := npm.Package(p[i])
-		fmt.Println(p[i], d.Downloads[len(d.Downloads)-1].Downloads)
+	p, err := npm.Packages("g-harel")
+	if err != nil {
+		panic(err)
 	}
+	//
+	var wg sync.WaitGroup
+	visited := map[string]bool{}
+	for i := 0; i < len(p); i++ {
+		visited[p[i]] = true
+		wg.Add(1)
+		go func(name string, i int) {
+			d, err := npm.Package(name)
+			if err != nil {
+				panic(err)
+			}
+			if len(d.Downloads) > 0 {
+				fmt.Println(i, name, d.Downloads[len(d.Downloads)-1].Downloads)
+			}
+			wg.Done()
+		}(p[i], i)
+	}
+	wg.Wait()
 
 }
 
