@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync"
 )
 
 type UserPage struct {
@@ -59,15 +60,22 @@ func Packages(user string) ([]string, error) {
 	}
 
 	totalPages := firstPage.Packages.Total/firstPage.Pagination.PerPage + 1
-	pages := []*UserPage{firstPage}
+	pages := make([]*UserPage, totalPages)
+	pages[0] = firstPage
 
+	var wg sync.WaitGroup
 	for i := 1; i < totalPages; i++ {
-		nthPage, err := fetchUserPage(user, i)
-		if err != nil {
-			fmt.Printf("failed to fetch page %v: %v", i, err)
-		}
-		pages = append(pages, nthPage)
+		wg.Add(1)
+		go func(page int) {
+			nthPage, err := fetchUserPage(user, page)
+			if err != nil {
+				fmt.Printf("failed to fetch page %v: %v", page, err)
+			}
+			pages[page] = nthPage
+			wg.Done()
+		}(i)
 	}
+	wg.Wait()
 
 	packages := []string{}
 	for i := 0; i < len(pages); i++ {

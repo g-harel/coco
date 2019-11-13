@@ -36,7 +36,7 @@ Traffic can only be collected from repositories that your account has push acces
 	fmt.Print(githubRepositories(token, users).String())
 
 	//
-	p, err := npm.Packages("g-harel")
+	p, err := npm.Packages("ruyadorno")
 	if err != nil {
 		panic(err)
 	}
@@ -58,7 +58,6 @@ Traffic can only be collected from repositories that your account has push acces
 		}(p[i], i)
 	}
 	wg.Wait()
-
 }
 
 func githubRepositories(token string, users []string) github.Repositories {
