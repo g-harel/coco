@@ -22,6 +22,7 @@ type UserPage struct {
 }
 
 type PackageData struct {
+	Package   string `json:"package"`
 	Downloads []struct {
 		Downloads int `json:"downloads"`
 	} `json:"downloads"`
@@ -53,7 +54,7 @@ func fetchUserPage(user string, page int) (*UserPage, error) {
 	return &p, nil
 }
 
-func Packages(user string) ([]string, error) {
+func fetchAllUserPackageNames(user string) ([]string, error) {
 	firstPage, err := fetchUserPage(user, 0)
 	if err != nil {
 		return nil, err
@@ -88,7 +89,7 @@ func Packages(user string) ([]string, error) {
 	return packages, nil
 }
 
-func Package(name string) (*PackageData, error) {
+func fetchPackageData(name string) (*PackageData, error) {
 	u, err := url.Parse(fmt.Sprintf("https://www.npmjs.com/package/%v", name))
 	if err != nil {
 		return nil, err
@@ -109,4 +110,45 @@ func Package(name string) (*PackageData, error) {
 	err = json.NewDecoder(res.Body).Decode(&p)
 
 	return &p, nil
+}
+
+func convert(d *PackageData) *Pkg {
+	p := &Pkg{
+		Name:   d.Package,
+		Weekly: 0,
+		Total:  0,
+	}
+	if len(d.Downloads) > 0 {
+		p.Weekly = d.Downloads[len(d.Downloads)-1].Downloads
+		for i := 0; i < len(d.Downloads); i++ {
+			p.Total += d.Downloads[i].Downloads
+		}
+	}
+	return p
+}
+
+func Packages(user string) string {
+	p, err := fetchAllUserPackageNames(user)
+	if err != nil {
+		panic(err)
+	}
+
+	packages := make(PackageList, len(p))
+	var wg sync.WaitGroup
+	visited := map[string]bool{}
+	for i := 0; i < len(p); i++ {
+		visited[p[i]] = true
+		wg.Add(1)
+		go func(name string, i int) {
+			d, err := fetchPackageData(name)
+			if err != nil {
+				panic(err)
+			}
+			packages[i] = convert(d)
+			wg.Done()
+		}(p[i], i)
+	}
+	wg.Wait()
+
+	return packages.String()
 }
