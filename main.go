@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/g-harel/coco/github"
 	"github.com/g-harel/coco/npm"
@@ -32,40 +33,21 @@ Traffic can only be collected from repositories that your account has push acces
 		os.Exit(1)
 	}
 
-	fmt.Print(githubRepositories(token, users).String())
-	fmt.Print(npm.Packages("g-harel"))
-}
+	var githubTable string
+	var npmTable string
 
-func githubRepositories(token string, users []string) github.Repositories {
-	gh := github.NewClient(token)
+	lock := sync.WaitGroup{}
+	lock.Add(2)
+	go func() {
+		githubTable = github.Repositories(token, users)
+		lock.Done()
+	}()
+	go func() {
+		npmTable = npm.Packages("g-harel")
+		lock.Done()
+	}()
+	lock.Wait()
 
-	repos, err := gh.Repositories(users)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "fetch repositories: %v", err)
-		os.Exit(1)
-	}
-
-	// Remove duplicate repositories (usernames might have overlap).
-	visited := make(map[string]bool)
-	repos = repos.Filter(func(r *github.Repository) bool {
-		if visited[r.Owner+r.Name] {
-			return false
-		}
-		visited[r.Owner+r.Name] = true
-		return true
-	})
-
-	// Fetch traffic data for all repositories.
-	repos = gh.Traffic(repos)
-
-	// Remove repos with errors or no reported views (in the past two weeks).
-	repos = repos.Filter(func(r *github.Repository) bool {
-		if r.Error != nil {
-			// Fetching errors are swallowed to avoid crowding the output (subject to change).
-			return false
-		}
-		return r.Views != 0
-	})
-
-	return repos
+	fmt.Print(githubTable)
+	fmt.Print(npmTable)
 }

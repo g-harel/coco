@@ -1,14 +1,20 @@
 package npm
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
+	"sort"
+	"strconv"
+	"strings"
 	"sync"
+
+	"github.com/olekukonko/tablewriter"
 )
 
-type UserPage struct {
+type userPage struct {
 	Packages struct {
 		Total   int `json:"total"`
 		Objects []struct {
@@ -21,14 +27,74 @@ type UserPage struct {
 	}
 }
 
-type PackageData struct {
+type packageData struct {
 	Package   string `json:"package"`
 	Downloads []struct {
 		Downloads int `json:"downloads"`
 	} `json:"downloads"`
 }
 
-func fetchUserPage(user string, page int) (*UserPage, error) {
+type packageStats struct {
+	Name   string
+	Weekly int
+	Total  int
+}
+
+type packageStatsList []*packageStats
+
+func (packages packageStatsList) String() string {
+	sort.Sort(packages)
+
+	data := [][]string{}
+	for _, p := range packages {
+		if p.Weekly < 12 {
+			continue
+		}
+		data = append(data, []string{
+			p.Name,
+			strconv.Itoa(p.Weekly),
+			strconv.Itoa(p.Total),
+			"https://npmjs.com/package/" + p.Name,
+		})
+	}
+
+	buf := &bytes.Buffer{}
+	table := tablewriter.NewWriter(buf)
+	table.SetHeader([]string{"package", "downloads", "total", "link"})
+	table.SetColumnAlignment([]int{
+		tablewriter.ALIGN_LEFT,
+		tablewriter.ALIGN_RIGHT,
+		tablewriter.ALIGN_RIGHT,
+		tablewriter.ALIGN_LEFT,
+	})
+	table.AppendBulk(data)
+	table.Render()
+
+	return buf.String()
+}
+
+func (packages packageStatsList) Len() int {
+	return len(packages)
+}
+
+func (packages packageStatsList) Less(i, j int) bool {
+	a := packages[i]
+	b := packages[j]
+	// Sort by: weekly downloads -> total downloads -> name
+	if a.Weekly == b.Weekly {
+		if a.Total == b.Total {
+			return strings.Compare(a.Name, b.Name) < 0
+		}
+		return a.Total > b.Total
+	}
+	return a.Weekly > b.Weekly
+}
+
+func (packages packageStatsList) Swap(i, j int) {
+	packages[i], packages[j] = packages[j], packages[i]
+}
+
+func fetchUserPage(user string, page int) (*userPage, error) {
 	u, err := url.Parse(fmt.Sprintf("https://www.npmjs.com/~%v?page=%v", user, page))
 	if err != nil {
 		return nil, err
@@ -45,7 +111,7 @@ func fetchUserPage(user string, page int) (*UserPage, error) {
 		return nil, err
 	}
 
-	var p UserPage
+	var p userPage
 	err = json.NewDecoder(res.Body).Decode(&p)
 	if err != nil {
 		return nil, err
@@ -61,7 +127,7 @@ func fetchAllUserPackageNames(user string) ([]string, error) {
 	}
 
 	totalPages := firstPage.Packages.Total/firstPage.Pagination.PerPage + 1
-	pages := make([]*UserPage, totalPages)
+	pages := make([]*userPage, totalPages)
 	pages[0] = firstPage
 
 	var wg sync.WaitGroup
@@ -89,7 +155,7 @@ func fetchAllUserPackageNames(user string) ([]string, error) {
 	return packages, nil
 }
 
-func fetchPackageData(name string) (*PackageData, error) {
+func fetchPackageData(name string) (*packageData, error) {
 	u, err := url.Parse(fmt.Sprintf("https://www.npmjs.com/package/%v", name))
 	if err != nil {
 		return nil, err
@@ -106,14 +172,14 @@ func fetchPackageData(name string) (*PackageData, error) {
 		return nil, err
 	}
 
-	var p PackageData
+	var p packageData
 	err = json.NewDecoder(res.Body).Decode(&p)
 
 	return &p, nil
 }
 
-func convert(d *PackageData) *Pkg {
-	p := &Pkg{
+func convert(d *packageData) *packageStats {
+	p := &packageStats{
 		Name:   d.Package,
 		Weekly: 0,
 		Total:  0,
@@ -133,7 +199,7 @@ func Packages(user string) string {
 		panic(err)
 	}
 
-	packages := make(PackageList, len(p))
+	packages := make(packageStatsList, len(p))
 	var wg sync.WaitGroup
 	visited := map[string]bool{}
 	for i := 0; i < len(p); i++ {
