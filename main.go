@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -10,7 +11,17 @@ import (
 	"github.com/g-harel/coco/npm"
 )
 
+var githubToken = flag.String("github-token", "", "GitHub API token")
+var githubUser = flag.String("github-user", "", "List of GitHub users and orgs whose repos to query (comma separated).")
+var npmUser = flag.String("npm-user", "", "List of NPM users whose packages to query (comma separated).")
+
 func main() {
+	flag.Parse()
+
+	println(*githubToken)
+	println(*githubUser)
+	println(*npmUser)
+
 	users := os.Args[1:]
 	if len(users) == 0 {
 		fmt.Println(strings.TrimSpace(`
@@ -27,23 +38,17 @@ Traffic can only be collected from repositories that your account has push acces
 		return
 	}
 
-	token, ok := os.LookupEnv("GITHUB_API_TOKEN")
-	if !ok {
-		fmt.Fprintln(os.Stderr, "Missing GITHUB_API_TOKEN environment variable.")
-		os.Exit(1)
-	}
-
 	var githubTable string
 	var npmTable string
 
 	lock := sync.WaitGroup{}
 	lock.Add(2)
 	go func() {
-		githubTable = github.Repositories(token, users)
+		githubTable = github.Repositories(*githubToken, []string{*githubUser})
 		lock.Done()
 	}()
 	go func() {
-		npmTable = npm.Packages("g-harel")
+		npmTable = npm.Packages(*npmUser)
 		lock.Done()
 	}()
 	lock.Wait()
