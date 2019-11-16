@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/g-harel/coco/logging"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -100,7 +101,7 @@ func fetchUserPage(user string, page int) (*userPage, error) {
 		return nil, err
 	}
 
-	res, err := http.DefaultClient.Do(&http.Request{
+	res, err := logging.DefaultClient.Do(&http.Request{
 		Method: http.MethodGet,
 		URL:    u,
 		Header: http.Header{
@@ -161,7 +162,7 @@ func fetchPackageData(name string) (*packageData, error) {
 		return nil, err
 	}
 
-	res, err := http.DefaultClient.Do(&http.Request{
+	res, err := logging.DefaultClient.Do(&http.Request{
 		Method: http.MethodGet,
 		URL:    u,
 		Header: http.Header{

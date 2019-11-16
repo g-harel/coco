@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/g-harel/coco/logging"
 	"github.com/google/go-github/github"
 	"github.com/olekukonko/tablewriter"
 	"golang.org/x/oauth2"
@@ -109,7 +110,7 @@ func NewClient(token string) *Client {
 	tc := oauth2.NewClient(context.Background(), ts)
 
 	return &Client{
-		github.NewClient(tc),
+		github.NewClient(logging.Wrap(tc)),
 	}
 }
 
