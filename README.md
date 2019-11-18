@@ -1,3 +1,14 @@
+<!--
+
+TODO
+- optional npm/github
+- parallelization utility
+- consistent error handling
+- rate limiting
+- request user packages in parallel
+
+ -->
+
 # coco
 
 > track repo traffic through the github api

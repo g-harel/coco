@@ -194,17 +194,23 @@ func convert(d *packageData) *packageStats {
 	return p
 }
 
-func Packages(user string) string {
-	p, err := fetchAllUserPackageNames(user)
-	if err != nil {
-		panic(err)
+func Packages(users ...string) string {
+	// TODO parallelize
+	pp := []string{}
+
+	for i := 0; i < len(users); i++ {
+		p, err := fetchAllUserPackageNames(users[i])
+		if err != nil {
+			panic(err)
+		}
+		pp = append(pp, p...)
 	}
 
-	packages := make(packageStatsList, len(p))
+	packages := make(packageStatsList, len(pp))
 	var wg sync.WaitGroup
 	visited := map[string]bool{}
-	for i := 0; i < len(p); i++ {
-		visited[p[i]] = true
+	for i := 0; i < len(pp); i++ {
+		visited[pp[i]] = true
 		wg.Add(1)
 		go func(name string, i int) {
 			d, err := fetchPackageData(name)
@@ -213,7 +219,7 @@ func Packages(user string) string {
 			}
 			packages[i] = convert(d)
 			wg.Done()
-		}(p[i], i)
+		}(pp[i], i)
 	}
 	wg.Wait()
 

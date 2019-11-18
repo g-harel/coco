@@ -207,7 +207,7 @@ func isToday(t github.Timestamp) bool {
 	return time.Now().Format(f) == t.Format(f)
 }
 
-func Repositories(token string, users []string) string {
+func Repositories(token string, users ...string) string {
 	gh := NewClient(token)
 
 	repos, err := gh.Repositories(users)
@@ -236,6 +236,11 @@ func Repositories(token string, users []string) string {
 			return false
 		}
 		return r.Views != 0
+	})
+
+	// Remove repos with very little views.
+	repos = repos.Filter(func(r *repositoryStats) bool {
+		return !(r.Today < 2 && r.Views < 4)
 	})
 
 	return repos.String()
