@@ -1,4 +1,4 @@
-package logging
+package internal
 
 import (
 	"fmt"
@@ -6,15 +6,15 @@ import (
 	"time"
 )
 
-var DefaultClient = Wrap(&http.Client{
+var DefaultHTTPClient = WrapHTTPClient(&http.Client{
 	Transport: http.DefaultTransport,
 })
 
-type WrappedRoundTripper struct {
+type loggingRoundTripper struct {
 	original http.RoundTripper
 }
 
-func (w *WrappedRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+func (w *loggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	start := time.Now()
 	res, err := w.original.RoundTrip(req)
 
@@ -38,11 +38,11 @@ func (w *WrappedRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 	return res, err
 }
 
-func Wrap(original *http.Client) *http.Client {
+func WrapHTTPClient(original *http.Client) *http.Client {
 	return &http.Client{
 		CheckRedirect: original.CheckRedirect,
 		Jar:           original.Jar,
 		Timeout:       original.Timeout,
-		Transport:     &WrappedRoundTripper{original: original.Transport},
+		Transport:     &loggingRoundTripper{original: original.Transport},
 	}
 }

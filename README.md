@@ -5,7 +5,7 @@ TODO
 - parallelization utility
 - consistent error handling
 - rate limiting
-- request user packages in parallel
+- remove all external dependencies
 
  -->
 

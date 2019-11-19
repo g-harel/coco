@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/g-harel/coco/logging"
+	"github.com/g-harel/coco/internal"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -101,7 +101,7 @@ func fetchUserPage(user string, page int) (*userPage, error) {
 		return nil, err
 	}
 
-	res, err := logging.DefaultClient.Do(&http.Request{
+	res, err := internal.DefaultHTTPClient.Do(&http.Request{
 		Method: http.MethodGet,
 		URL:    u,
 		Header: http.Header{
@@ -162,7 +162,7 @@ func fetchPackageData(name string) (*packageData, error) {
 		return nil, err
 	}
 
-	res, err := logging.DefaultClient.Do(&http.Request{
+	res, err := internal.DefaultHTTPClient.Do(&http.Request{
 		Method: http.MethodGet,
 		URL:    u,
 		Header: http.Header{
@@ -195,33 +195,25 @@ func convert(d *packageData) *packageStats {
 }
 
 func Packages(users ...string) string {
-	// TODO parallelize
-	pp := []string{}
-
-	for i := 0; i < len(users); i++ {
+	packageNames := []string{}
+	internal.ExecParallel(len(users), func(i int) {
 		p, err := fetchAllUserPackageNames(users[i])
 		if err != nil {
 			panic(err)
 		}
-		pp = append(pp, p...)
-	}
+		internal.ExecSafe(func() {
+			packageNames = append(packageNames, p...)
+		})
+	})
 
-	packages := make(packageStatsList, len(pp))
-	var wg sync.WaitGroup
-	visited := map[string]bool{}
-	for i := 0; i < len(pp); i++ {
-		visited[pp[i]] = true
-		wg.Add(1)
-		go func(name string, i int) {
-			d, err := fetchPackageData(name)
-			if err != nil {
-				panic(err)
-			}
-			packages[i] = convert(d)
-			wg.Done()
-		}(pp[i], i)
-	}
-	wg.Wait()
+	packageStats := make(packageStatsList, len(packageNames))
+	internal.ExecParallel(len(packageNames), func(i int) {
+		data, err := fetchPackageData(packageNames[i])
+		if err != nil {
+			panic(err)
+		}
+		packageStats[i] = convert(data)
+	})
 
-	return packages.String()
+	return packageStats.String()
 }
