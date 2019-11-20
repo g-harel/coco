@@ -110,7 +110,7 @@ func NewClient(token string) *Client {
 	tc := oauth2.NewClient(context.Background(), ts)
 
 	return &Client{
-		github.NewClient(internal.WrapHTTPClient(tc)),
+		github.NewClient(internal.NewLoggingClient(tc)),
 	}
 }
 

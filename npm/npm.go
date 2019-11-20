@@ -100,7 +100,7 @@ func fetchUserPage(user string, page int) (*userPage, error) {
 		return nil, err
 	}
 
-	res, err := internal.DefaultHTTPClient.Do(&http.Request{
+	res, err := internal.DefaultLoggingClient.Do(&http.Request{
 		Method: http.MethodGet,
 		URL:    u,
 		Header: http.Header{
@@ -124,6 +124,10 @@ func fetchAllUserPackageNames(user string) ([]string, error) {
 	firstPage, err := fetchUserPage(user, 0)
 	if err != nil {
 		return nil, err
+	}
+
+	if firstPage.Packages.Total == 0 {
+		return []string{}, nil
 	}
 
 	totalPages := firstPage.Packages.Total/firstPage.Pagination.PerPage + 1
@@ -158,7 +162,7 @@ func fetchPackageData(name string) (*packageData, error) {
 		return nil, err
 	}
 
-	res, err := internal.DefaultHTTPClient.Do(&http.Request{
+	res, err := internal.DefaultLoggingClient.Do(&http.Request{
 		Method: http.MethodGet,
 		URL:    u,
 		Header: http.Header{
@@ -195,7 +199,8 @@ func Packages(users ...string) string {
 	internal.ExecParallel(len(users), func(i int) {
 		p, err := fetchAllUserPackageNames(users[i])
 		if err != nil {
-			panic(err)
+			internal.LogError("fetch user package names: %v", err)
+			return
 		}
 		internal.ExecSafe(func() {
 			packageNames = append(packageNames, p...)
@@ -206,7 +211,8 @@ func Packages(users ...string) string {
 	internal.ExecParallel(len(packageNames), func(i int) {
 		data, err := fetchPackageData(packageNames[i])
 		if err != nil {
-			panic(err)
+			internal.LogError("fetch package data: %v", err)
+			return
 		}
 		packageStats[i] = convert(data)
 	})
