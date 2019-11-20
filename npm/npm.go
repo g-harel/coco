@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/g-harel/coco/internal"
 	"github.com/olekukonko/tablewriter"
@@ -129,21 +128,18 @@ func fetchAllUserPackageNames(user string) ([]string, error) {
 
 	totalPages := firstPage.Packages.Total/firstPage.Pagination.PerPage + 1
 	pages := make([]*userPage, totalPages)
-	pages[0] = firstPage
 
-	var wg sync.WaitGroup
-	for i := 1; i < totalPages; i++ {
-		wg.Add(1)
-		go func(page int) {
-			nthPage, err := fetchUserPage(user, page)
-			if err != nil {
-				fmt.Printf("failed to fetch page %v: %v", page, err)
-			}
-			pages[page] = nthPage
-			wg.Done()
-		}(i)
-	}
-	wg.Wait()
+	internal.ExecParallel(totalPages, func(page int) {
+		if page == 0 {
+			pages[page] = firstPage
+			return
+		}
+		nthPage, err := fetchUserPage(user, page)
+		if err != nil {
+			fmt.Printf("failed to fetch page %v: %v", page, err)
+		}
+		pages[page] = nthPage
+	})
 
 	packages := []string{}
 	for i := 0; i < len(pages); i++ {
