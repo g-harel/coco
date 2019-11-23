@@ -39,10 +39,18 @@ func formatTableCell(value interface{}) string {
 	if !ok {
 		return fmt.Sprintf("%v", value)
 	}
+	if number == 0 {
+		return "0"
+	}
+	sign := ""
+	if number < 0 {
+		number = -number
+		sign = "-"
+	}
 	parts := []string{}
 	for number > 0 {
 		parts = append([]string{fmt.Sprintf("%03v", number%1000)}, parts...)
 		number /= 1000
 	}
-	return strings.TrimLeft(strings.Join(parts, ","), "0")
+	return sign + strings.TrimLeft(strings.Join(parts, ","), "0")
 }
