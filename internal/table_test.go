@@ -2,6 +2,12 @@ package internal
 
 import "testing"
 
+func assertEqual(t *testing.T, actual, expected interface{}) {
+	if actual != expected {
+		t.Errorf("actual/expected don't match: \n  actual: '%v'\nexpected: '%v'", actual, expected)
+	}
+}
+
 func TestFormatTableCell(t *testing.T) {
 	tt := []struct {
 		Description string
@@ -20,10 +26,16 @@ func TestFormatTableCell(t *testing.T) {
 	for i := 0; i < len(tt); i++ {
 		tc := tt[i]
 		t.Run(tc.Description, func(t *testing.T) {
-			actual := formatTableCell(tc.Input)
-			if actual != tc.Expected {
-				t.Errorf("actual/expected don't match: \n  actual: '%v'\nexpected: '%v'", actual, tc.Expected)
-			}
+			assertEqual(t, formatTableCell(tc.Input), tc.Expected)
 		})
 	}
+}
+
+func TestFormat(t *testing.T) {
+	t.Run("", func(t *testing.T) {
+		tb := Table{}
+		tb.Headers("test", "abc", "1234")
+		tb.Add(0, 1, 1234)
+		assertEqual(t, tb.Format(), "")
+	})
 }

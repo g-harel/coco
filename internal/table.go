@@ -5,15 +5,17 @@ import (
 	"strings"
 )
 
+const columnSeparator = " | "
+
 // Table holds table data that can be sorted and printed.
 type Table struct {
-	titles []string
-	data   [][]interface{}
+	headers []string
+	data    [][]interface{}
 }
 
-// Titles adds table titles.
-func (t *Table) Titles(titles ...string) {
-	t.titles = titles
+// Headers adds column headers.
+func (t *Table) Headers(titles ...string) {
+	t.headers = titles
 }
 
 // Add appends a new row of data.
@@ -28,7 +30,37 @@ func (t *Table) Add(data ...interface{}) {
 // prioritized last and in the same order. Numbers are right-aligned and
 // formatted with commas.
 func (t *Table) Format(columnSort ...int) string {
-	return ""
+	// Calculate column widths from max of headers and cells.
+	columnWidths := []int{}
+	for i := 0; i < len(t.headers); i++ {
+		width := len(formatTableHeader(t.headers[i]))
+		columnWidths = append(columnWidths, width)
+	}
+	for i := 0; i < len(t.data); i++ {
+		for j := 0; j < len(t.data[i]); j++ {
+			width := len(formatTableCell(t.data[i][j]))
+			if len(columnWidths) < j {
+				columnWidths = append(columnWidths, width)
+				continue
+			}
+			if width > columnWidths[j] {
+				columnWidths[j] = width
+			}
+		}
+	}
+	headers := []string{}
+	for i := 0; i < len(columnWidths); i++ {
+		value := ""
+		if len(t.headers) > i {
+			value = formatTableHeader(t.headers[i])
+		}
+		headers = append(headers, fmt.Sprintf("%-*v", columnWidths[i], value))
+	}
+	return strings.Join(headers, columnSeparator)
+}
+
+func formatTableHeader(value string) string {
+	return strings.ToUpper(value)
 }
 
 func formatTableCell(value interface{}) string {
