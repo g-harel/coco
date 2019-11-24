@@ -48,15 +48,39 @@ func (t *Table) Format(columnSort ...int) string {
 			}
 		}
 	}
-	headers := []string{}
+	// Sort data.
+	// TODO
+	// Format headers.
+	headerLine := []string{}
 	for i := 0; i < len(columnWidths); i++ {
 		value := ""
-		if len(t.headers) > i {
+		if i < len(t.headers) {
 			value = formatTableHeader(t.headers[i])
 		}
-		headers = append(headers, fmt.Sprintf("%-*v", columnWidths[i], value))
+		headerLine = append(headerLine, fmt.Sprintf("%-*v", columnWidths[i], value))
 	}
-	return strings.Join(headers, columnSeparator)
+	lines := []string{strings.Join(headerLine, columnSeparator)}
+	// Format data.
+	for i := 0; i < len(t.data); i++ {
+		row := []string{}
+		for j := 0; j < len(columnWidths); j++ {
+			value := ""
+			number := false
+			if j < len(t.data[i]) {
+				if _, ok := t.data[i][j].(int); ok {
+					number = true
+				}
+				value = formatTableCell(t.data[i][j])
+			}
+			if number {
+				row = append(row, fmt.Sprintf("%*v", columnWidths[j], value))
+			} else {
+				row = append(row, fmt.Sprintf("%-*v", columnWidths[j], value))
+			}
+		}
+		lines = append(lines, strings.Join(row, columnSeparator))
+	}
+	return strings.Join(lines, "\n")
 }
 
 func formatTableHeader(value string) string {

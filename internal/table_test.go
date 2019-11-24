@@ -1,8 +1,13 @@
 package internal
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
-func assertEqual(t *testing.T, actual, expected interface{}) {
+func assertEqual(t *testing.T, actual, expected string) {
+	actual = strings.ReplaceAll(actual, "\n", "\\n")
+	expected = strings.ReplaceAll(expected, "\n", "\\n")
 	if actual != expected {
 		t.Errorf("actual/expected don't match: \n  actual: '%v'\nexpected: '%v'", actual, expected)
 	}
@@ -35,7 +40,12 @@ func TestFormat(t *testing.T) {
 	t.Run("", func(t *testing.T) {
 		tb := Table{}
 		tb.Headers("test", "abc", "1234")
-		tb.Add(0, 1, 1234)
-		assertEqual(t, tb.Format(), "")
+		tb.Add(0, "a", 1234)
+		tb.Add("aa aaaa aa aa a")
+		assertEqual(t, tb.Format(),
+			""+
+				"TEST            | ABC | 1234 \n"+
+				"              0 | a   | 1,234\n"+
+				"aa aaaa aa aa a |     |      ")
 	})
 }
