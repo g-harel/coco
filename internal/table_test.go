@@ -13,7 +13,7 @@ func assertEqual(t *testing.T, actual, expected string) {
 	}
 }
 
-func TestFormatTableCell(t *testing.T) {
+func TestTableFormatCell(t *testing.T) {
 	tt := []struct {
 		Description string
 		Input       interface{}
@@ -31,7 +31,7 @@ func TestFormatTableCell(t *testing.T) {
 	for i := 0; i < len(tt); i++ {
 		tc := tt[i]
 		t.Run(tc.Description, func(t *testing.T) {
-			assertEqual(t, formatTableCell(tc.Input), tc.Expected)
+			assertEqual(t, tableFormatCell(tc.Input), tc.Expected)
 		})
 	}
 }
@@ -39,13 +39,13 @@ func TestFormatTableCell(t *testing.T) {
 func TestFormat(t *testing.T) {
 	t.Run("", func(t *testing.T) {
 		tb := Table{}
-		tb.Headers("test", "abc", "1234")
+		tb.Headers("TEST", "ABC", "1234")
 		tb.Add(0, "a", 1234)
 		tb.Add("aa aaaa aa aa a")
 		assertEqual(t, tb.Format(),
 			""+
 				"TEST            | ABC | 1234 \n"+
 				"              0 | a   | 1,234\n"+
-				"aa aaaa aa aa a |     |      ")
+				"aa aaaa aa aa a |     |      \n")
 	})
 }

@@ -5,17 +5,17 @@ import (
 	"strings"
 )
 
-const columnSeparator = " | "
+const tableColumnSeparator = " | "
 
 // Table holds table data that can be sorted and printed.
 type Table struct {
-	headers []string
+	headers []interface{}
 	data    [][]interface{}
 }
 
 // Headers adds column headers.
-func (t *Table) Headers(titles ...string) {
-	t.headers = titles
+func (t *Table) Headers(data ...interface{}) {
+	t.headers = data
 }
 
 // Add appends a new row of data.
@@ -24,22 +24,22 @@ func (t *Table) Add(data ...interface{}) {
 }
 
 // Format formats the table data to a string.
-// First provided column index will have highest priority. Intgers are compared
-// as numbers, but all other data types are compared as strings. Nil values are
-// given the lowest possible order. Column indecies that are not provided are
-// prioritized last and in the same order. Numbers are right-aligned and
-// formatted with commas.
-func (t *Table) Format(columnSort ...int) string {
-	// Calculate column widths from max of headers and cells.
-	columnWidths := []int{}
-	for i := 0; i < len(t.headers); i++ {
-		width := len(formatTableHeader(t.headers[i]))
-		columnWidths = append(columnWidths, width)
+func (t *Table) Format(columnSortPriority ...int) string {
+	columnWidths := tableColumnWidths(append(t.data, t.headers))
+	sortOrder := tableSortOrder(t.data, columnSortPriority)
+	formattedTable := tableFormatRow(t.headers, columnWidths)
+	for i := 0; i < len(sortOrder); i++ {
+		formattedTable += tableFormatRow(t.data[sortOrder[i]], columnWidths)
 	}
-	for i := 0; i < len(t.data); i++ {
-		for j := 0; j < len(t.data[i]); j++ {
-			width := len(formatTableCell(t.data[i][j]))
-			if len(columnWidths) < j {
+	return formattedTable
+}
+
+func tableColumnWidths(data [][]interface{}) []int {
+	columnWidths := []int{}
+	for i := 0; i < len(data); i++ {
+		for j := 0; j < len(data[i]); j++ {
+			width := len(tableFormatCell(data[i][j]))
+			if len(columnWidths) <= j {
 				columnWidths = append(columnWidths, width)
 				continue
 			}
@@ -48,52 +48,53 @@ func (t *Table) Format(columnSort ...int) string {
 			}
 		}
 	}
-	// Sort data.
-	// TODO
-	// Format headers.
-	headerLine := []string{}
+	return columnWidths
+}
+
+// Columns are prioritized by the order their index appears in
+// "columnSortPriority". Column indecies that are not provided are prioritized
+// the lowest and from first to last. Integers are compared as numbers, but all
+// other data types are compared as strings. Nil values are given the lowest
+// possible order.
+func tableSortOrder(data [][]interface{}, columnSortPriority []int) []int {
+	// TODO sort
+	order := []int{}
+	for i := 0; i < len(data); i++ {
+		order = append(order, i)
+	}
+	return order
+}
+
+// Numbers are right-aligned, all other data types are left-aligned.
+func tableFormatRow(data []interface{}, columnWidths []int) string {
+	row := []string{}
 	for i := 0; i < len(columnWidths); i++ {
 		value := ""
-		if i < len(t.headers) {
-			value = formatTableHeader(t.headers[i])
-		}
-		headerLine = append(headerLine, fmt.Sprintf("%-*v", columnWidths[i], value))
-	}
-	lines := []string{strings.Join(headerLine, columnSeparator)}
-	// Format data.
-	for i := 0; i < len(t.data); i++ {
-		row := []string{}
-		for j := 0; j < len(columnWidths); j++ {
-			value := ""
-			number := false
-			if j < len(t.data[i]) {
-				if _, ok := t.data[i][j].(int); ok {
-					number = true
-				}
-				value = formatTableCell(t.data[i][j])
+		number := false
+		if i < len(data) {
+			if _, ok := data[i].(int); ok {
+				number = true
 			}
-			if number {
-				row = append(row, fmt.Sprintf("%*v", columnWidths[j], value))
-			} else {
-				row = append(row, fmt.Sprintf("%-*v", columnWidths[j], value))
-			}
+			value = tableFormatCell(data[i])
 		}
-		lines = append(lines, strings.Join(row, columnSeparator))
+		if number {
+			row = append(row, fmt.Sprintf("%*v", columnWidths[i], value))
+		} else {
+			row = append(row, fmt.Sprintf("%-*v", columnWidths[i], value))
+		}
 	}
-	return strings.Join(lines, "\n")
+	return strings.Join(row, tableColumnSeparator) + "\n"
 }
 
-func formatTableHeader(value string) string {
-	return strings.ToUpper(value)
-}
-
-func formatTableCell(value interface{}) string {
-	if value == nil {
+// Integers are formatted with commas for each thousand. Nil is formatted as an
+// empty string.
+func tableFormatCell(data interface{}) string {
+	if data == nil {
 		return ""
 	}
-	number, ok := value.(int)
+	number, ok := data.(int)
 	if !ok {
-		return fmt.Sprintf("%v", value)
+		return fmt.Sprintf("%v", data)
 	}
 	if number == 0 {
 		return "0"
