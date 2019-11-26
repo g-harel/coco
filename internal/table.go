@@ -5,7 +5,10 @@ import (
 	"strings"
 )
 
-const tableColumnSeparator = " | "
+// Must be single character.
+const tableVerticalSeparator = "|"
+const tableHorizontalSeparator = "-"
+const tableIntersectionSeparator = "+"
 
 // Table holds table data that can be sorted and printed.
 type Table struct {
@@ -27,10 +30,13 @@ func (t *Table) Add(data ...interface{}) {
 func (t *Table) Format(columnSortPriority ...int) string {
 	columnWidths := tableColumnWidths(append(t.data, t.headers))
 	sortOrder := tableSortOrder(t.data, columnSortPriority)
-	formattedTable := tableFormatRow(t.headers, columnWidths)
+	formattedTable := tableFormatHorizontalSeparator(columnWidths)
+	formattedTable += tableFormatRow(t.headers, columnWidths)
+	formattedTable += tableFormatHorizontalSeparator(columnWidths)
 	for i := 0; i < len(sortOrder); i++ {
 		formattedTable += tableFormatRow(t.data[sortOrder[i]], columnWidths)
 	}
+	formattedTable += tableFormatHorizontalSeparator(columnWidths)
 	return formattedTable
 }
 
@@ -65,6 +71,16 @@ func tableSortOrder(data [][]interface{}, columnSortPriority []int) []int {
 	return order
 }
 
+func tableFormatHorizontalSeparator(columnWidths []int) string {
+	row := []string{}
+	for i := 0; i < len(columnWidths); i++ {
+		row = append(row, strings.Repeat(tableHorizontalSeparator, columnWidths[i] + 2))
+	}
+	pre := tableIntersectionSeparator
+	post := tableIntersectionSeparator + "\n"
+	return pre + strings.Join(row, tableIntersectionSeparator) + post;
+}
+
 // Numbers are right-aligned, all other data types are left-aligned.
 func tableFormatRow(data []interface{}, columnWidths []int) string {
 	row := []string{}
@@ -83,7 +99,10 @@ func tableFormatRow(data []interface{}, columnWidths []int) string {
 			row = append(row, fmt.Sprintf("%-*v", columnWidths[i], value))
 		}
 	}
-	return strings.Join(row, tableColumnSeparator) + "\n"
+	pre := tableVerticalSeparator + " "
+	mid := " " + tableVerticalSeparator + " "
+	post := " " + tableVerticalSeparator + "\n"
+	return pre + strings.Join(row, mid) + post
 }
 
 // Integers are formatted with commas for each thousand. Nil is formatted as an

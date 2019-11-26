@@ -1,8 +1,7 @@
 <!--
 
 TODO
-- optional npm/github
-- parallelization utility
+- optional npm/github (with error if none)
 - consistent error handling
 - rate limiting
 - remove all external dependencies

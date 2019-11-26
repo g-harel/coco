@@ -44,8 +44,11 @@ func TestFormat(t *testing.T) {
 		tb.Add("aa aaaa aa aa a")
 		assertEqual(t, tb.Format(),
 			""+
-				"TEST            | ABC | 1234 \n"+
-				"              0 | a   | 1,234\n"+
-				"aa aaaa aa aa a |     |      \n")
+				"+-----------------+-----+-------+\n"+
+				"| TEST            | ABC | 1234  |\n"+
+				"+-----------------+-----+-------+\n"+
+				"|               0 | a   | 1,234 |\n"+
+				"| aa aaaa aa aa a |     |       |\n"+
+				"+-----------------+-----+-------+\n")
 	})
 }
