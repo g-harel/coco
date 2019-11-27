@@ -5,6 +5,7 @@ TODO
 - consistent error handling
 - rate limiting
 - remove all external dependencies
+- make quantity filters flags
 
  -->
 

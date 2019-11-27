@@ -42,7 +42,7 @@ func TestFormat(t *testing.T) {
 		tb.Headers("TEST", "ABC", "1234")
 		tb.Add(0, "a", 1234)
 		tb.Add("aa aaaa aa aa a")
-		assertEqual(t, tb.Format(),
+		assertEqual(t, tb.Format(1, 1, 12),
 			""+
 				"+-----------------+-----+-------+\n"+
 				"| TEST            | ABC | 1234  |\n"+
@@ -50,5 +50,28 @@ func TestFormat(t *testing.T) {
 				"|               0 | a   | 1,234 |\n"+
 				"| aa aaaa aa aa a |     |       |\n"+
 				"+-----------------+-----+-------+\n")
+	})
+
+	t.Run("", func(t *testing.T) {
+		tb := Table{}
+		tb.Headers("A", "B", "C", "D")
+		tb.Add(1)
+		tb.Add(1, 1, 1)
+		tb.Add(1, 1, 1, 1)
+		tb.Add(1, 1, nil, 1)
+		tb.Add(nil, nil, 2)
+		tb.Add(nil, "a", 1, "a")
+		assertEqual(t, tb.Format(2, 1),
+			""+
+				"+---+---+---+---+\n"+
+				"| A | B | C | D |\n"+
+				"+---+---+---+---+\n"+
+				"|   |   | 2 |   |\n"+
+				"|   | a | 1 | a |\n"+
+				"| 1 | 1 | 1 | 1 |\n"+
+				"| 1 | 1 | 1 |   |\n"+
+				"| 1 | 1 |   | 1 |\n"+
+				"| 1 |   |   |   |\n"+
+				"+---+---+---+---+\n")
 	})
 }
