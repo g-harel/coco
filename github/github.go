@@ -1,18 +1,14 @@
 package github
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
-	"sort"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/g-harel/coco/internal"
 	"github.com/google/go-github/github"
-	"github.com/olekukonko/tablewriter"
 	"golang.org/x/oauth2"
 )
 
@@ -47,59 +43,18 @@ func (repos repositoryStatsList) Filter(test func(*repositoryStats) bool) reposi
 
 // String returns a formatted view of the repository data.
 func (repos repositoryStatsList) String() string {
-	sort.Sort(repos)
-
-	data := [][]string{}
+	t := internal.Table{}
+	t.Headers("REPO", "VIEWS", "DAY", "UNIQUE", "LINK")
 	for _, r := range repos {
-		data = append(data, []string{
+		t.Add(
 			r.Name,
-			strconv.Itoa(r.Views),
-			strconv.Itoa(r.Today),
-			strconv.Itoa(r.Unique),
-			"https://github.com/" + r.Owner + "/" + r.Name + "/graphs/traffic",
-		})
+			r.Views,
+			r.Today,
+			r.Unique,
+			"https://github.com/"+r.Owner+"/"+r.Name+"/graphs/traffic",
+		)
 	}
-
-	buf := &bytes.Buffer{}
-	table := tablewriter.NewWriter(buf)
-	table.SetHeader([]string{"repo", "views", "day", "unique", "link"})
-	table.SetColumnAlignment([]int{
-		tablewriter.ALIGN_LEFT,
-		tablewriter.ALIGN_RIGHT,
-		tablewriter.ALIGN_RIGHT,
-		tablewriter.ALIGN_RIGHT,
-		tablewriter.ALIGN_LEFT,
-	})
-	table.AppendBulk(data)
-	table.Render()
-
-	return buf.String()
-}
-
-// Remaining functions implement sort.Interface.
-
-func (repos repositoryStatsList) Len() int {
-	return len(repos)
-}
-
-func (repos repositoryStatsList) Less(i, j int) bool {
-	a := repos[i]
-	b := repos[j]
-	// Sort by: total views -> today's views -> unique views -> name
-	if a.Views == b.Views {
-		if a.Today == b.Today {
-			if a.Unique == b.Unique {
-				return strings.Compare(a.Name, b.Name) < 0
-			}
-			return a.Unique > b.Unique
-		}
-		return a.Today > b.Today
-	}
-	return a.Views > b.Views
-}
-
-func (repos repositoryStatsList) Swap(i, j int) {
-	repos[i], repos[j] = repos[j], repos[i]
+	return t.Format(1, 2, 3)
 }
 
 // NewClient creates and configures a new Client.

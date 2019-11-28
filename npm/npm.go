@@ -1,17 +1,11 @@
 package npm
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/g-harel/coco/internal"
 	"net/http"
 	"net/url"
-	"sort"
-	"strconv"
-	"strings"
-
-	"github.com/g-harel/coco/internal"
-	"github.com/olekukonko/tablewriter"
 )
 
 type userPage struct {
@@ -43,55 +37,20 @@ type packageStats struct {
 type packageStatsList []*packageStats
 
 func (packages packageStatsList) String() string {
-	sort.Sort(packages)
-
-	data := [][]string{}
+	t := internal.Table{}
+	t.Headers("PACKAGE", "DOWNLOADS", "TOTAL", "LINK")
 	for _, p := range packages {
 		if p.Weekly < 12 {
 			continue
 		}
-		data = append(data, []string{
+		t.Add(
 			p.Name,
-			strconv.Itoa(p.Weekly),
-			strconv.Itoa(p.Total),
-			"https://npmjs.com/package/" + p.Name,
-		})
+			p.Weekly,
+			p.Total,
+			"https://npmjs.com/package/"+p.Name,
+		)
 	}
-
-	buf := &bytes.Buffer{}
-	table := tablewriter.NewWriter(buf)
-	table.SetHeader([]string{"package", "downloads", "total", "link"})
-	table.SetColumnAlignment([]int{
-		tablewriter.ALIGN_LEFT,
-		tablewriter.ALIGN_RIGHT,
-		tablewriter.ALIGN_RIGHT,
-		tablewriter.ALIGN_LEFT,
-	})
-	table.AppendBulk(data)
-	table.Render()
-
-	return buf.String()
-}
-
-func (packages packageStatsList) Len() int {
-	return len(packages)
-}
-
-func (packages packageStatsList) Less(i, j int) bool {
-	a := packages[i]
-	b := packages[j]
-	// Sort by: weekly downloads -> total downloads -> name
-	if a.Weekly == b.Weekly {
-		if a.Total == b.Total {
-			return strings.Compare(a.Name, b.Name) < 0
-		}
-		return a.Total > b.Total
-	}
-	return a.Weekly > b.Weekly
-}
-
-func (packages packageStatsList) Swap(i, j int) {
-	packages[i], packages[j] = packages[j], packages[i]
+	return t.Format(1, 2)
 }
 
 func fetchUserPage(user string, page int) (*userPage, error) {
