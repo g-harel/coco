@@ -42,7 +42,8 @@ func TestFormat(t *testing.T) {
 		tb.Headers("TEST", "ABC", "1234")
 		tb.Add(0, "a", 1234)
 		tb.Add("aa aaaa aa aa a")
-		assertEqual(t, tb.Format(1, 1, 12),
+		tb.Sort(1, 1, 12)
+		assertEqual(t, tb.String(),
 			""+
 				"+-----------------+-----+-------+\n"+
 				"| TEST            | ABC | 1234  |\n"+
@@ -61,7 +62,8 @@ func TestFormat(t *testing.T) {
 		tb.Add(1, 1, nil, 1)
 		tb.Add(nil, nil, 2)
 		tb.Add(nil, "a", 1, "a")
-		assertEqual(t, tb.Format(2, 1),
+		tb.Sort(2, 1)
+		assertEqual(t, tb.String(),
 			""+
 				"+---+---+---+---+\n"+
 				"| A | B | C | D |\n"+

@@ -13,8 +13,9 @@ const tableIntersectionSeparator = "+"
 
 // Table holds table data that can be sorted and printed.
 type Table struct {
-	headers []interface{}
-	data    [][]interface{}
+	headers            []interface{}
+	columnSortPriority []int
+	data               [][]interface{}
 }
 
 // Headers adds column headers.
@@ -27,10 +28,15 @@ func (t *Table) Add(data ...interface{}) {
 	t.data = append(t.data, data)
 }
 
-// Format formats the table data to a string.
-func (t *Table) Format(columnSortPriority ...int) string {
+// Sort sets the columns to sort by when formating.
+func (t *Table) Sort(columnSortPriority ...int) {
+	t.columnSortPriority = columnSortPriority
+}
+
+// String formats the table data to a string.
+func (t *Table) String() string {
 	columnWidths := tableColumnWidths(append(t.data, t.headers))
-	sortOrder := tableSortOrder(t.data, columnSortPriority)
+	sortOrder := tableSortOrder(t.data, t.columnSortPriority)
 	formattedTable := tableFormatHorizontalSeparator(columnWidths)
 	formattedTable += tableFormatRow(t.headers, columnWidths)
 	formattedTable += tableFormatHorizontalSeparator(columnWidths)

@@ -19,7 +19,7 @@ func main() {
 	flag.Parse()
 
 	var githubTable string
-	var npmTable string
+	var npmTable internal.Table
 
 	lock := sync.WaitGroup{}
 	lock.Add(2)
@@ -36,10 +36,10 @@ func main() {
 	lock.Wait()
 
 	fmt.Print(githubTable)
-	fmt.Print(npmTable)
+	fmt.Print(npmTable.String())
 }
 
-func npmPackages(users ...string) string {
+func npmPackages(users ...string) internal.Table {
 	var t internal.Table
 	t.Headers("PACKAGE", "DOWNLOADS", "TOTAL", "LINK")
 	collectors.NpmPackages(func(p *collectors.NpmPackage, err error) {
@@ -54,5 +54,6 @@ func npmPackages(users ...string) string {
 		t.Add(p.Name, p.Weekly, p.Total, link)
 
 	}, users...)
-	return t.Format(1, 2)
+	t.Sort(1, 2)
+	return t
 }

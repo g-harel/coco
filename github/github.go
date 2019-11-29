@@ -54,7 +54,8 @@ func (repos repositoryStatsList) String() string {
 			"https://github.com/"+r.Owner+"/"+r.Name+"/graphs/traffic",
 		)
 	}
-	return t.Format(1, 2, 3)
+	t.Sort(1, 2, 3)
+	return t.String()
 }
 
 // NewClient creates and configures a new Client.
