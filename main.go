@@ -6,8 +6,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/g-harel/coco/collectors"
 	"github.com/g-harel/coco/github"
-	"github.com/g-harel/coco/npm"
+	"github.com/g-harel/coco/internal"
 )
 
 var githubToken = flag.String("github-token", "", "GitHub API token")
@@ -29,11 +30,29 @@ func main() {
 	}()
 	go func() {
 		users := strings.Split(strings.ReplaceAll(*npmUsers, " ", ""), ",")
-		npmTable = npm.Packages(users...)
+		npmTable = npmPackages(users...)
 		lock.Done()
 	}()
 	lock.Wait()
 
 	fmt.Print(githubTable)
 	fmt.Print(npmTable)
+}
+
+func npmPackages(users ...string) string {
+	var t internal.Table
+	t.Headers("PACKAGE", "DOWNLOADS", "TOTAL", "LINK")
+	collectors.NpmPackages(func(p *collectors.NpmPackage, err error) {
+		if err != nil {
+			internal.LogError("%v\n", err)
+			return
+		}
+		if p.Weekly < 12 {
+			return
+		}
+		link := "https://npmjs.com/package/" + p.Name
+		t.Add(p.Name, p.Weekly, p.Total, link)
+
+	}, users...)
+	return t.Format(1, 2)
 }

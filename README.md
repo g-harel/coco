@@ -1,11 +1,14 @@
 <!--
 
 TODO
-- optional npm/github (with error if none)
+- optional npm/github (with help if none)
 - consistent error handling
 - rate limiting
-- remove all external dependencies
+- remove external dependencies
 - make quantity filters flags
+- control logging with flags
+- log time since start
+- http get helper
 
  -->
 
