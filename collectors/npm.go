@@ -1,11 +1,9 @@
 package collectors
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/g-harel/coco/internal"
 	"net/http"
-	"net/url"
 	"sync"
 )
 
@@ -73,7 +71,7 @@ func npmHandleUser(f npmPackageResponseHandler, user string) {
 		return
 	}
 
-	var wg sync.WaitGroup
+	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
 		npmHandleUserResponse(f, firstPage)
@@ -100,56 +98,27 @@ func npmHandleUserResponse(f npmPackageResponseHandler, r *npmUserResponse) {
 }
 
 func npmFetchUser(user string, page int) (*npmUserResponse, error) {
-	u, err := url.Parse(fmt.Sprintf("https://www.npmjs.com/~%v?page=%v", user, page))
+	res := &npmUserResponse{}
+	err := internal.HTTPGet(
+		fmt.Sprintf("https://www.npmjs.com/~%v?page=%v", user, page),
+		http.Header{"x-spiferack": []string{"1"}},
+		res,
+	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("fetch user %v page %v: %v", user, page, err)
 	}
-
-	res, err := internal.DefaultLoggingClient.Do(&http.Request{
-		Method: http.MethodGet,
-		URL:    u,
-		Header: http.Header{
-			"x-spiferack": []string{"1"},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to fetch user %v: unexpected status code %v", user, res.StatusCode)
-	}
-
-	var p npmUserResponse
-	err = json.NewDecoder(res.Body).Decode(&p)
-	if err != nil {
-		return nil, err
-	}
-
-	return &p, nil
+	return res, nil
 }
 
 func npmFetchPackage(name string) (*npmPackageResponse, error) {
-	u, err := url.Parse(fmt.Sprintf("https://www.npmjs.com/package/%v", name))
+	res := &npmPackageResponse{}
+	err := internal.HTTPGet(
+		fmt.Sprintf("https://www.npmjs.com/package/%v", name),
+		http.Header{"x-spiferack": []string{"1"}},
+		res,
+	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("fetch user package %v: %v", name, err)
 	}
-
-	res, err := internal.DefaultLoggingClient.Do(&http.Request{
-		Method: http.MethodGet,
-		URL:    u,
-		Header: http.Header{
-			"x-spiferack": []string{"1"},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	var p npmPackageResponse
-	err = json.NewDecoder(res.Body).Decode(&p)
-	if err != nil {
-		return nil, err
-	}
-
-	return &p, nil
+	return res, nil
 }

@@ -2,7 +2,7 @@ package internal
 
 import "sync"
 
-var globalMutex sync.Mutex
+var globalMutex = sync.Mutex{}
 
 func ExecSafe(f func()) {
 	globalMutex.Lock()

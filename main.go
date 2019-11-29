@@ -18,8 +18,8 @@ var npmUsers = flag.String("npm-user", "", "List of NPM users whose packages to 
 func main() {
 	flag.Parse()
 
-	var githubTable string
-	var npmTable internal.Table
+	githubTable := ""
+	npmTable := internal.Table{}
 
 	lock := sync.WaitGroup{}
 	lock.Add(2)
@@ -40,7 +40,7 @@ func main() {
 }
 
 func npmPackages(users ...string) internal.Table {
-	var t internal.Table
+	t := internal.Table{}
 	t.Headers("PACKAGE", "DOWNLOADS", "TOTAL", "LINK")
 	collectors.NpmPackages(func(p *collectors.NpmPackage, err error) {
 		if err != nil {

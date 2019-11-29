@@ -133,7 +133,7 @@ func (c *Client) Traffic(repos repositoryStatsList) repositoryStatsList {
 			}
 
 			// Traffic from today is highlighted.
-			var trafficToday int
+			trafficToday := 0
 			for _, stat := range traffic.Views {
 				if isToday(stat.GetTimestamp()) {
 					trafficToday += stat.GetCount()

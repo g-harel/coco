@@ -20,17 +20,23 @@ type Table struct {
 
 // Headers adds column headers.
 func (t *Table) Headers(data ...interface{}) {
-	t.headers = data
+	ExecSafe(func() {
+		t.headers = data
+	})
 }
 
 // Add appends a new row of data.
 func (t *Table) Add(data ...interface{}) {
-	t.data = append(t.data, data)
+	ExecSafe(func() {
+		t.data = append(t.data, data)
+	})
 }
 
 // Sort sets the columns to sort by when formating.
 func (t *Table) Sort(columnSortPriority ...int) {
-	t.columnSortPriority = columnSortPriority
+	ExecSafe(func() {
+		t.columnSortPriority = columnSortPriority
+	})
 }
 
 // String formats the table data to a string.
