@@ -15,13 +15,13 @@ type NpmPackage struct {
 
 type NpmPackageHandler func(*NpmPackage, error)
 
-func NpmPackages(f NpmPackageHandler, users ...string) {
-	internal.ExecParallel(len(users), func(i int) {
-		npmHandleUser(npmConverterFunc(f), users[i])
+func NpmPackages(f NpmPackageHandler, owners ...string) {
+	internal.ExecParallel(len(owners), func(i int) {
+		npmHandleOwner(npmConverterFunc(f), owners[i])
 	})
 }
 
-type npmUserResponse struct {
+type npmOwnerResponse struct {
 	Packages struct {
 		Total   int `json:"total"`
 		Objects []struct {
@@ -64,8 +64,8 @@ func npmConverterFunc(f NpmPackageHandler) npmPackageResponseHandler {
 	}
 }
 
-func npmHandleUser(f npmPackageResponseHandler, user string) {
-	firstPage, err := npmFetchUser(user, 0)
+func npmHandleOwner(f npmPackageResponseHandler, owner string) {
+	firstPage, err := npmFetchOwner(owner, 0)
 	if err != nil {
 		f(nil, err)
 		return
@@ -74,51 +74,51 @@ func npmHandleUser(f npmPackageResponseHandler, user string) {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		npmHandleUserResponse(f, firstPage)
+		npmHandleOwnerResponse(f, firstPage)
 		wg.Done()
 	}()
 
 	remainingPages := firstPage.Packages.Total / firstPage.Pagination.PerPage
 	internal.ExecParallel(remainingPages, func(n int) {
-		nthPage, err := npmFetchUser(user, n+1)
+		nthPage, err := npmFetchOwner(owner, n+1)
 		if err != nil {
 			f(nil, fmt.Errorf("failed to fetch page %v: %v", n, err))
 		} else {
-			npmHandleUserResponse(f, nthPage)
+			npmHandleOwnerResponse(f, nthPage)
 		}
 	})
 
 	wg.Wait()
 }
 
-func npmHandleUserResponse(f npmPackageResponseHandler, r *npmUserResponse) {
+func npmHandleOwnerResponse(f npmPackageResponseHandler, r *npmOwnerResponse) {
 	internal.ExecParallel(len(r.Packages.Objects), func(n int) {
 		f(npmFetchPackage(r.Packages.Objects[n].Name))
 	})
 }
 
-func npmFetchUser(user string, page int) (*npmUserResponse, error) {
-	res := &npmUserResponse{}
-	err := internal.HTTPGet(
-		fmt.Sprintf("https://www.npmjs.com/~%v?page=%v", user, page),
+func npmFetchOwner(owner string, page int) (*npmOwnerResponse, error) {
+	res := &npmOwnerResponse{}
+	_, err := internal.HTTPGet(
+		fmt.Sprintf("https://www.npmjs.com/~%v?page=%v", owner, page),
 		http.Header{"x-spiferack": []string{"1"}},
 		res,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("fetch user %v page %v: %v", user, page, err)
+		return nil, fmt.Errorf("fetch owner %v page %v: %v", owner, page, err)
 	}
 	return res, nil
 }
 
 func npmFetchPackage(name string) (*npmPackageResponse, error) {
 	res := &npmPackageResponse{}
-	err := internal.HTTPGet(
+	_, err := internal.HTTPGet(
 		fmt.Sprintf("https://www.npmjs.com/package/%v", name),
 		http.Header{"x-spiferack": []string{"1"}},
 		res,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("fetch user package %v: %v", name, err)
+		return nil, fmt.Errorf("fetch owner package %v: %v", name, err)
 	}
 	return res, nil
 }

@@ -9,6 +9,9 @@ TODO
 - control logging with flags
 - log time since start
 - http get helper
+- add stars to github table
+- remove argument spreads
+- add godoc/documentation
 
  -->
 
