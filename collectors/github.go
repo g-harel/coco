@@ -3,6 +3,9 @@ package collectors
 import (
 	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
 
 	"github.com/g-harel/coco/internal"
 )
@@ -60,22 +63,44 @@ func githubHandleOwner(f githubRepoResponseHandler, owner string) {
 
 }
 
-func githubParsePaginationHeader(h http.Header) (last int, ok bool) {
-	return 0, false
+func githubParsePaginationHeader(h *http.Header) (last int, err error) {
+	header := strings.Split(h.Get("Link"), ",")
+	for i := 0; i < len(header); i++ {
+		if strings.HasSuffix(header[i], `>; rel="last"`) {
+			rawURL := strings.TrimSpace(header[i])
+			rawURL = strings.TrimPrefix(rawURL, "<")
+			rawURL = strings.TrimSuffix(rawURL, `>; rel="last"`)
+			url, err := url.Parse(rawURL)
+			if err != nil {
+				return 0, err
+			}
+			rawPage := url.Query().Get("page")
+			page, err := strconv.Atoi(rawPage)
+			if err != nil {
+				return 0, err
+			}
+			return page, nil
+
+		}
+	}
+	return 0, fmt.Errorf("pagination header value not found")
 }
 
-func GithubFetchOwnerRepos(owner string, page int) (*githubRepoListResponse, error) {
+func GithubFetchOwnerRepos(owner string, page int) (*githubRepoListResponse, int, error) {
 	res := &githubRepoListResponse{}
-	_, err := internal.HTTPGet(
+	h, err := internal.HTTPGet(
 		fmt.Sprintf("https://api.github.com/users/%v/repos?page=%v", owner, page),
 		http.Header{"Authorization": []string{fmt.Sprintf("token %v", "TODO")}},
 		res,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("fetch owner %v page %v: %v", owner, page, err)
+		return nil, 0, fmt.Errorf("fetch owner %v page %v: %v", owner, page, err)
 	}
-	// TODO add pagination
-	return res, nil
+	lastPage, err := githubParsePaginationHeader(h)
+	if err != nil {
+		return nil, 0, fmt.Errorf("parse pagination header: %v", err)
+	}
+	return res, lastPage, nil
 }
 
 func githubFetchRepoViews(owner, name string) (*githubRepoViewsResponse, error) {

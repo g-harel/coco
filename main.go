@@ -18,7 +18,7 @@ var npmUsers = flag.String("npm-user", "", "List of NPM users whose packages to 
 func main() {
 	flag.Parse()
 
-	collectors.GithubFetchOwnerRepos("g-harel", 1)
+	fmt.Println(collectors.GithubFetchOwnerRepos("g-harel", 1))
 	return
 
 	githubTable := ""

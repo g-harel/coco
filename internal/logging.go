@@ -22,7 +22,7 @@ func (w *loggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 	}
 
 	message := fmt.Sprintf(
-		"%v %4vms %v\u001b[0m\n",
+		"%v %4vms  %v\u001b[0m\n",
 		res.StatusCode,
 		time.Since(start).Truncate(time.Millisecond).Nanoseconds()/1e6,
 		req.URL.String(),

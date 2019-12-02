@@ -3,7 +3,6 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 )
@@ -27,9 +26,6 @@ func HTTPGet(rawUrl string, headers http.Header, body interface{}) (*http.Header
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code %v", res.StatusCode)
 	}
-
-	data, _ := ioutil.ReadAll(res.Body)
-	fmt.Println(string(data), res.Header)
 
 	err = json.NewDecoder(res.Body).Decode(body)
 	if err != nil {
