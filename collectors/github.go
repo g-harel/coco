@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/g-harel/coco/internal"
 )
@@ -20,9 +21,9 @@ type GithubRepo struct {
 
 type GithubRepoHandler func(*GithubRepo, error)
 
-func GithubRepos(f GithubRepoHandler, owners ...string) {
+func GithubRepos(f GithubRepoHandler, token string, owners ...string) {
 	internal.ExecParallel(len(owners), func(i int) {
-		githubHandleOwner(githubConverterFunc(f), owners[i])
+		githubHandleOwner(githubConverterFunc(f), token, owners[i])
 	})
 }
 
@@ -41,9 +42,45 @@ type githubRepoViewsResponse struct {
 		Count     int    `json:"count"`
 		Uniques   int    `json:"uniques"`
 	} `json:"views"`
+
+	Name  string
+	Owner string
 }
 
 type githubRepoResponseHandler func(*githubRepoViewsResponse, error)
+
+func githubHandleOwner(f githubRepoResponseHandler, token, owner string) {
+	firstPage, last, err := githubFetchOwnerRepos(token, owner, 0)
+	if err != nil {
+		f(nil, err)
+		return
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		githubHandleRepoListResponse(f, token, firstPage)
+		wg.Done()
+	}()
+
+	remainingPages := last - 1
+	internal.ExecParallel(remainingPages, func(n int) {
+		nthPage, _, err := githubFetchOwnerRepos(token, owner, n+1)
+		if err != nil {
+			f(nil, fmt.Errorf("fetch page %v: %v", n, err))
+		} else {
+			githubHandleRepoListResponse(f, token, nthPage)
+		}
+	})
+
+	wg.Wait()
+}
+
+func githubHandleRepoListResponse(f githubRepoResponseHandler, token string, r githubRepoListResponse) {
+	internal.ExecParallel(len(r), func(n int) {
+		f(githubFetchRepoViews(token, r[n].Owner.Login, r[n].Name))
+	})
+}
 
 func githubConverterFunc(f GithubRepoHandler) githubRepoResponseHandler {
 	return func(r *githubRepoViewsResponse, err error) {
@@ -52,15 +89,14 @@ func githubConverterFunc(f GithubRepoHandler) githubRepoResponseHandler {
 			return
 		}
 		p := &GithubRepo{
+			Owner:  r.Owner,
+			Name:   r.Name,
 			Views:  r.Count,
 			Unique: r.Uniques,
 		}
+		// TODO calc today
 		f(p, nil)
 	}
-}
-
-func githubHandleOwner(f githubRepoResponseHandler, owner string) {
-
 }
 
 func githubParsePaginationHeader(h *http.Header) (last int, err error) {
@@ -86,12 +122,12 @@ func githubParsePaginationHeader(h *http.Header) (last int, err error) {
 	return 0, fmt.Errorf("pagination header value not found")
 }
 
-func GithubFetchOwnerRepos(owner string, page int) (*githubRepoListResponse, int, error) {
-	res := &githubRepoListResponse{}
+func githubFetchOwnerRepos(token, owner string, page int) (githubRepoListResponse, int, error) {
+	res := githubRepoListResponse{}
 	h, err := internal.HTTPGet(
 		fmt.Sprintf("https://api.github.com/users/%v/repos?page=%v", owner, page),
-		http.Header{"Authorization": []string{fmt.Sprintf("token %v", "TODO")}},
-		res,
+		http.Header{"Authorization": []string{fmt.Sprintf("token %v", token)}},
+		&res,
 	)
 	if err != nil {
 		return nil, 0, fmt.Errorf("fetch owner %v page %v: %v", owner, page, err)
@@ -103,15 +139,17 @@ func GithubFetchOwnerRepos(owner string, page int) (*githubRepoListResponse, int
 	return res, lastPage, nil
 }
 
-func githubFetchRepoViews(owner, name string) (*githubRepoViewsResponse, error) {
+func githubFetchRepoViews(token, owner, name string) (*githubRepoViewsResponse, error) {
 	res := &githubRepoViewsResponse{}
 	_, err := internal.HTTPGet(
 		fmt.Sprintf("https://api.github.com/repos/%v/%v/traffic/views", owner, name),
-		http.Header{"Authorization": []string{fmt.Sprintf("token %v", "TODO")}},
+		http.Header{"Authorization": []string{fmt.Sprintf("token %v", token)}},
 		res,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("fetch owner package %v: %v", name, err)
+		return nil, fmt.Errorf("fetch repo views %v: %v", name, err)
 	}
+	res.Owner = owner
+	res.Name = name
 	return res, nil
 }

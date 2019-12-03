@@ -7,42 +7,38 @@ import (
 	"sync"
 
 	"github.com/g-harel/coco/collectors"
-	"github.com/g-harel/coco/github"
 	"github.com/g-harel/coco/internal"
 )
 
 var githubToken = flag.String("github-token", "", "GitHub API token")
-var githubUsers = flag.String("github-user", "", "List of GitHub users and orgs whose repos to query (comma separated).")
-var npmUsers = flag.String("npm-user", "", "List of NPM users whose packages to query (comma separated).")
+var githubOwners = flag.String("github-owner", "", "List of GitHub owners whose repos to query (comma separated).")
+var npmOwners = flag.String("npm-owner", "", "List of NPM owners whose packages to query (comma separated).")
 
 func main() {
 	flag.Parse()
 
-	fmt.Println(collectors.GithubFetchOwnerRepos("g-harel", 1))
-	return
-
-	githubTable := ""
+	githubTable := internal.Table{}
 	npmTable := internal.Table{}
 
 	lock := sync.WaitGroup{}
 	lock.Add(2)
 	go func() {
-		users := strings.Split(strings.ReplaceAll(*githubUsers, " ", ""), ",")
-		githubTable = github.Repositories(*githubToken, users...)
+		owners := strings.Split(strings.ReplaceAll(*githubOwners, " ", ""), ",")
+		githubTable = collectGithubPackages(*githubToken, owners...)
 		lock.Done()
 	}()
 	go func() {
-		users := strings.Split(strings.ReplaceAll(*npmUsers, " ", ""), ",")
-		npmTable = npmPackages(users...)
+		owners := strings.Split(strings.ReplaceAll(*npmOwners, " ", ""), ",")
+		npmTable = collectNpmPackages(owners...)
 		lock.Done()
 	}()
 	lock.Wait()
 
-	fmt.Print(githubTable)
+	fmt.Print(githubTable.String())
 	fmt.Print(npmTable.String())
 }
 
-func npmPackages(users ...string) internal.Table {
+func collectNpmPackages(owners ...string) internal.Table {
 	t := internal.Table{}
 	t.Headers("PACKAGE", "DOWNLOADS", "TOTAL", "LINK")
 	collectors.NpmPackages(func(p *collectors.NpmPackage, err error) {
@@ -56,7 +52,29 @@ func npmPackages(users ...string) internal.Table {
 		link := "https://npmjs.com/package/" + p.Name
 		t.Add(p.Name, p.Weekly, p.Total, link)
 
-	}, users...)
+	}, owners...)
 	t.Sort(1, 2)
 	return t
+}
+
+func collectGithubPackages(token string, owners ...string) internal.Table {
+	t := internal.Table{}
+	t.Headers("REPO", "VIEWS", "DAY", "UNIQUE", "LINK")
+	collectors.GithubRepos(func(r *collectors.GithubRepo, err error) {
+		if err != nil {
+			internal.LogError("%v\n", err)
+			return
+		}
+		if r.Views == 0 {
+			return
+		}
+		if r.Today < 2 && r.Views < 4 {
+			return
+		}
+		link := "https://github.com/" + r.Owner + "/" + r.Name + "/graphs/traffic"
+		t.Add(r.Name, r.Views, r.Today, r.Unique, link)
+	}, token, owners...)
+	t.Sort(1, 2, 3)
+	return t
+
 }

@@ -43,6 +43,39 @@ type npmPackageResponse struct {
 
 type npmPackageResponseHandler func(*npmPackageResponse, error)
 
+func npmHandleOwner(f npmPackageResponseHandler, owner string) {
+	firstPage, err := npmFetchOwner(owner, 0)
+	if err != nil {
+		f(nil, err)
+		return
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		npmHandleOwnerResponse(f, firstPage)
+		wg.Done()
+	}()
+
+	remainingPages := firstPage.Packages.Total / firstPage.Pagination.PerPage
+	internal.ExecParallel(remainingPages, func(n int) {
+		nthPage, err := npmFetchOwner(owner, n+1)
+		if err != nil {
+			f(nil, fmt.Errorf("fetch page %v: %v", n, err))
+		} else {
+			npmHandleOwnerResponse(f, nthPage)
+		}
+	})
+
+	wg.Wait()
+}
+
+func npmHandleOwnerResponse(f npmPackageResponseHandler, r *npmOwnerResponse) {
+	internal.ExecParallel(len(r.Packages.Objects), func(n int) {
+		f(npmFetchPackage(r.Packages.Objects[n].Name))
+	})
+}
+
 func npmConverterFunc(f NpmPackageHandler) npmPackageResponseHandler {
 	return func(r *npmPackageResponse, err error) {
 		if err != nil {
@@ -62,39 +95,6 @@ func npmConverterFunc(f NpmPackageHandler) npmPackageResponseHandler {
 		}
 		f(p, nil)
 	}
-}
-
-func npmHandleOwner(f npmPackageResponseHandler, owner string) {
-	firstPage, err := npmFetchOwner(owner, 0)
-	if err != nil {
-		f(nil, err)
-		return
-	}
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		npmHandleOwnerResponse(f, firstPage)
-		wg.Done()
-	}()
-
-	remainingPages := firstPage.Packages.Total / firstPage.Pagination.PerPage
-	internal.ExecParallel(remainingPages, func(n int) {
-		nthPage, err := npmFetchOwner(owner, n+1)
-		if err != nil {
-			f(nil, fmt.Errorf("failed to fetch page %v: %v", n, err))
-		} else {
-			npmHandleOwnerResponse(f, nthPage)
-		}
-	})
-
-	wg.Wait()
-}
-
-func npmHandleOwnerResponse(f npmPackageResponseHandler, r *npmOwnerResponse) {
-	internal.ExecParallel(len(r.Packages.Objects), func(n int) {
-		f(npmFetchPackage(r.Packages.Objects[n].Name))
-	})
 }
 
 func npmFetchOwner(owner string, page int) (*npmOwnerResponse, error) {
