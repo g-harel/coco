@@ -3,7 +3,6 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 )
@@ -17,16 +16,12 @@ func HTTPGet(rawUrl string, headers http.Header, body interface{}) (*http.Header
 	res, err := DefaultLoggingClient.Do(&http.Request{
 		Method: http.MethodGet,
 		URL:    u,
-		Header: http.Header{
-			"x-spiferack": []string{"1"},
-		},
+		Header: headers,
 	})
 	if err != nil {
 		return nil, err
 	}
 	if res.StatusCode != http.StatusOK {
-		data, _ := ioutil.ReadAll(res.Body)
-		fmt.Println(string(data))
 		return nil, fmt.Errorf("unexpected status code %v", res.StatusCode)
 	}
 

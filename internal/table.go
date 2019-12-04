@@ -220,7 +220,7 @@ func (s tableDataSorter) Less(i, j int) bool {
 		}
 		iFormatted := tableFormatCell(iValue)
 		jFormatted := tableFormatCell(jValue)
-		return iFormatted > jFormatted
+		return iFormatted < jFormatted
 	}
 	return true
 }

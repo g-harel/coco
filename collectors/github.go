@@ -50,7 +50,7 @@ type githubRepoViewsResponse struct {
 type githubRepoResponseHandler func(*githubRepoViewsResponse, error)
 
 func githubHandleOwner(f githubRepoResponseHandler, token, owner string) {
-	firstPage, last, err := githubFetchOwnerRepos(token, owner, 0)
+	firstPage, lastURL, err := githubFetchInitialOwnerRepo(token, owner)
 	if err != nil {
 		f(nil, err)
 		return
@@ -63,11 +63,32 @@ func githubHandleOwner(f githubRepoResponseHandler, token, owner string) {
 		wg.Done()
 	}()
 
+	if lastURL == nil {
+		wg.Wait()
+		return
+	}
+
+	last, err := strconv.Atoi(lastURL.Query().Get("page"))
+	if err != nil {
+		f(nil, fmt.Errorf("parse last pagination index: %v", err))
+		return
+	}
+
 	remainingPages := last - 1
 	internal.ExecParallel(remainingPages, func(n int) {
-		nthPage, _, err := githubFetchOwnerRepos(token, owner, n+1)
+		nthPageURL, _ := url.Parse(lastURL.String())
+		query := nthPageURL.Query()
+		query.Del("page")
+		query.Add("page", strconv.Itoa(n+2))
+		nthPageURL.RawQuery = query.Encode()
+		nthPage := githubRepoListResponse{}
+		_, err := internal.HTTPGet(
+			nthPageURL.String(),
+			githubTokenHeader(token),
+			&nthPage,
+		)
 		if err != nil {
-			f(nil, fmt.Errorf("fetch page %v: %v", n, err))
+			f(nil, fmt.Errorf("fetch owner %v page %v: %v", owner, n+1, err))
 		} else {
 			githubHandleRepoListResponse(f, token, nthPage)
 		}
@@ -99,7 +120,7 @@ func githubConverterFunc(f GithubRepoHandler) githubRepoResponseHandler {
 	}
 }
 
-func githubParsePaginationHeader(h *http.Header) (last int, err error) {
+func githubParsePaginationHeaderLastURL(h *http.Header) (*url.URL, error) {
 	header := strings.Split(h.Get("Link"), ",")
 	for i := 0; i < len(header); i++ {
 		if strings.HasSuffix(header[i], `>; rel="last"`) {
@@ -108,42 +129,38 @@ func githubParsePaginationHeader(h *http.Header) (last int, err error) {
 			rawURL = strings.TrimSuffix(rawURL, `>; rel="last"`)
 			url, err := url.Parse(rawURL)
 			if err != nil {
-				return 0, err
+				return nil, fmt.Errorf("parse pagination url: %v", err)
 			}
-			rawPage := url.Query().Get("page")
-			page, err := strconv.Atoi(rawPage)
-			if err != nil {
-				return 0, err
-			}
-			return page, nil
+			return url, nil
 
 		}
 	}
-	return 0, fmt.Errorf("pagination header value not found")
+	return nil, fmt.Errorf("pagination header value not found")
 }
 
-func githubFetchOwnerRepos(token, owner string, page int) (githubRepoListResponse, int, error) {
+func githubFetchInitialOwnerRepo(token, owner string) (githubRepoListResponse, *url.URL, error) {
 	res := githubRepoListResponse{}
 	h, err := internal.HTTPGet(
-		fmt.Sprintf("https://api.github.com/users/%v/repos?page=%v", owner, page),
-		http.Header{"Authorization": []string{fmt.Sprintf("token %v", token)}},
+		fmt.Sprintf("https://api.github.com/users/%v/repos?page=1", owner),
+		githubTokenHeader(token),
 		&res,
 	)
 	if err != nil {
-		return nil, 0, fmt.Errorf("fetch owner %v page %v: %v", owner, page, err)
+		return nil, nil, fmt.Errorf("fetch owner initial page %v: %v", owner, err)
 	}
-	lastPage, err := githubParsePaginationHeader(h)
+	lastPageURL, err := githubParsePaginationHeaderLastURL(h)
 	if err != nil {
-		return nil, 0, fmt.Errorf("parse pagination header: %v", err)
+		return res, nil, nil
 	}
-	return res, lastPage, nil
+	return res, lastPageURL, nil
+
 }
 
 func githubFetchRepoViews(token, owner, name string) (*githubRepoViewsResponse, error) {
 	res := &githubRepoViewsResponse{}
 	_, err := internal.HTTPGet(
 		fmt.Sprintf("https://api.github.com/repos/%v/%v/traffic/views", owner, name),
-		http.Header{"Authorization": []string{fmt.Sprintf("token %v", token)}},
+		githubTokenHeader(token),
 		res,
 	)
 	if err != nil {
@@ -152,4 +169,8 @@ func githubFetchRepoViews(token, owner, name string) (*githubRepoViewsResponse, 
 	res.Owner = owner
 	res.Name = name
 	return res, nil
+}
+
+func githubTokenHeader(token string) http.Header {
+	return http.Header{"Authorization": []string{fmt.Sprintf("token %v", token)}}
 }
