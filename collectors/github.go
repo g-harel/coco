@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/g-harel/coco/internal"
 )
@@ -40,7 +41,6 @@ type githubRepoViewsResponse struct {
 	Views   []struct {
 		Timestamp string `json:"timestamp"`
 		Count     int    `json:"count"`
-		Uniques   int    `json:"uniques"`
 	} `json:"views"`
 
 	Name  string
@@ -109,13 +109,20 @@ func githubConverterFunc(f GithubRepoHandler) githubRepoResponseHandler {
 			f(nil, err)
 			return
 		}
+		today := 0
+		nowPrefix := time.Now().Format("2006-01-02")
+		for i := 0; i < len(r.Views); i++ {
+			if strings.HasPrefix(r.Views[i].Timestamp, nowPrefix) {
+				today += r.Views[i].Count
+			}
+		}
 		p := &GithubRepo{
-			Owner:  r.Owner,
 			Name:   r.Name,
+			Owner:  r.Owner,
 			Views:  r.Count,
+			Today:  today,
 			Unique: r.Uniques,
 		}
-		// TODO calc today
 		f(p, nil)
 	}
 }
