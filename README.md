@@ -4,11 +4,9 @@ TODO
 - optional npm/github (with help if none)
 - consistent error handling
 - rate limiting
-- remove external dependencies
 - make quantity filters flags
 - control logging with flags
 - log time since start
-- http get helper
 - add stars to github table
 - remove argument spreads
 - add godoc/documentation
@@ -17,9 +15,7 @@ TODO
 
 # coco
 
-> track repo traffic through the github api
-
-Repositories with no views (in the past 14 days) will not get displayed.
+> track project stats
 
 ## Usage
 
@@ -28,15 +24,14 @@ $ go get -u github.com/g-harel/coco
 ```
 
 ```
-Usage: coco [USER]...
-List repository traffic for USER(s).
+Usage: coco [flags...]
 
-Examples:
-  coco username
-  coco orgname username
+Flags:
+  -github-owner  Comma-separated list of GitHub owners to query for owned repos.
+  -github-token  Authentication token used for GitHub requests.
+  -npm-owner     Comma-separated list of NPM owners to query for owned packages.
 
-Looks for GitHub api key in GITHUB_API_TOKEN environment variable.
-Traffic can only be collected from repositories that your account has push access to.
+GitHub traffic can only be collected from repositories that your account has push access to.
 ```
 
 ```
