@@ -7,7 +7,6 @@ TODO
 - make quantity filters flags
 - control logging with flags
 - log time since start
-- add stars to github table
 - remove argument spreads
 - add godoc/documentation
 

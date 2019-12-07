@@ -15,6 +15,7 @@ import (
 type GithubRepo struct {
 	Name   string
 	Owner  string
+	Stars  int
 	Views  int
 	Today  int
 	Unique int
@@ -24,7 +25,7 @@ type GithubRepoHandler func(*GithubRepo, error)
 
 func GithubRepos(f GithubRepoHandler, token string, owners ...string) {
 	internal.ExecParallel(len(owners), func(i int) {
-		githubHandleOwner(githubConverterFunc(f), token, owners[i])
+		githubHandleOwner(f, token, owners[i])
 	})
 }
 
@@ -33,6 +34,7 @@ type githubRepoListResponse []struct {
 	Owner struct {
 		Login string `json:"login"`
 	} `json:"owner"`
+	Stars int `json:"stargazers_count"`
 }
 
 type githubRepoViewsResponse struct {
@@ -42,14 +44,11 @@ type githubRepoViewsResponse struct {
 		Timestamp string `json:"timestamp"`
 		Count     int    `json:"count"`
 	} `json:"views"`
-
-	Name  string
-	Owner string
 }
 
 type githubRepoResponseHandler func(*githubRepoViewsResponse, error)
 
-func githubHandleOwner(f githubRepoResponseHandler, token, owner string) {
+func githubHandleOwner(f GithubRepoHandler, token, owner string) {
 	firstPage, lastURL, err := githubFetchInitialOwnerRepo(token, owner)
 	if err != nil {
 		f(nil, err)
@@ -97,13 +96,14 @@ func githubHandleOwner(f githubRepoResponseHandler, token, owner string) {
 	wg.Wait()
 }
 
-func githubHandleRepoListResponse(f githubRepoResponseHandler, token string, r githubRepoListResponse) {
+func githubHandleRepoListResponse(f GithubRepoHandler, token string, r githubRepoListResponse) {
 	internal.ExecParallel(len(r), func(n int) {
-		f(githubFetchRepoViews(token, r[n].Owner.Login, r[n].Name))
+		convertedHandler := githubConverterFunc(f, r[n].Owner.Login, r[n].Name, r[n].Stars)
+		convertedHandler(githubFetchRepoViews(token, r[n].Owner.Login, r[n].Name))
 	})
 }
 
-func githubConverterFunc(f GithubRepoHandler) githubRepoResponseHandler {
+func githubConverterFunc(f GithubRepoHandler, owner, name string, stars int) githubRepoResponseHandler {
 	return func(r *githubRepoViewsResponse, err error) {
 		if err != nil {
 			f(nil, err)
@@ -117,8 +117,9 @@ func githubConverterFunc(f GithubRepoHandler) githubRepoResponseHandler {
 			}
 		}
 		p := &GithubRepo{
-			Name:   r.Name,
-			Owner:  r.Owner,
+			Name:   name,
+			Owner:  owner,
+			Stars:  stars,
 			Views:  r.Count,
 			Today:  today,
 			Unique: r.Uniques,
@@ -173,8 +174,6 @@ func githubFetchRepoViews(token, owner, name string) (*githubRepoViewsResponse, 
 	if err != nil {
 		return nil, fmt.Errorf("fetch repo views %v: %v", name, err)
 	}
-	res.Owner = owner
-	res.Name = name
 	return res, nil
 }
 

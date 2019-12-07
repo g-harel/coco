@@ -40,7 +40,12 @@ func main() {
 
 func collectNpmPackages(owners ...string) internal.Table {
 	t := internal.Table{}
-	t.Headers("PACKAGE", "DOWNLOADS", "TOTAL", "LINK")
+	t.Headers(
+		"PACKAGE",
+		"DOWNLOADS",
+		"TOTAL",
+		"LINK",
+	)
 	collectors.NpmPackages(func(p *collectors.NpmPackage, err error) {
 		if err != nil {
 			internal.LogError("%v\n", err)
@@ -50,7 +55,12 @@ func collectNpmPackages(owners ...string) internal.Table {
 			return
 		}
 		link := "https://npmjs.com/package/" + p.Name
-		t.Add(p.Name, p.Weekly, p.Total, link)
+		t.Add(
+			p.Name,
+			p.Weekly,
+			p.Total,
+			link,
+		)
 
 	}, owners...)
 	t.Sort(1, 2)
@@ -59,7 +69,13 @@ func collectNpmPackages(owners ...string) internal.Table {
 
 func collectGithubPackages(token string, owners ...string) internal.Table {
 	t := internal.Table{}
-	t.Headers("REPO", "VIEWS", "DAY", "UNIQUE", "LINK")
+	t.Headers(
+		"REPO",
+		"VIEWS",
+		"UNIQUE",
+		"TODAY",
+		"LINK",
+	)
 	collectors.GithubRepos(func(r *collectors.GithubRepo, err error) {
 		if err != nil {
 			internal.LogError("%v\n", err)
@@ -71,10 +87,14 @@ func collectGithubPackages(token string, owners ...string) internal.Table {
 		if r.Today < 2 && r.Views < 4 {
 			return
 		}
-		link := "https://github.com/" + r.Owner + "/" + r.Name + "/graphs/traffic"
-		t.Add(r.Name, r.Views, r.Today, r.Unique, link)
+		t.Add(
+			fmt.Sprintf("%v*%v", r.Name, r.Stars),
+			r.Views,
+			r.Unique,
+			r.Today,
+			fmt.Sprintf("https://github.com/%v/%v/graphs/traffic", r.Owner, r.Name),
+		)
 	}, token, owners...)
-	t.Sort(1, 2, 3)
+	t.Sort(1, 3, 2)
 	return t
-
 }
