@@ -15,7 +15,7 @@ type NpmPackage struct {
 
 type NpmPackageHandler func(*NpmPackage, error)
 
-func NpmPackages(f NpmPackageHandler, owners ...string) {
+func NpmPackages(f NpmPackageHandler, owners []string) {
 	internal.ExecParallel(len(owners), func(i int) {
 		npmHandleOwner(npmConverterFunc(f), owners[i])
 	})

@@ -23,7 +23,7 @@ type GithubRepo struct {
 
 type GithubRepoHandler func(*GithubRepo, error)
 
-func GithubRepos(f GithubRepoHandler, token string, owners ...string) {
+func GithubRepos(f GithubRepoHandler, token string, owners []string) {
 	internal.ExecParallel(len(owners), func(i int) {
 		githubHandleOwner(f, token, owners[i])
 	})

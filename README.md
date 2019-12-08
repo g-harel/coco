@@ -6,8 +6,6 @@ TODO
 - rate limiting
 - make quantity filters flags
 - control logging with flags
-- log time since start
-- remove argument spreads
 - add godoc/documentation
 
  -->

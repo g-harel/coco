@@ -24,12 +24,12 @@ func main() {
 	lock.Add(2)
 	go func() {
 		owners := strings.Split(strings.ReplaceAll(*githubOwners, " ", ""), ",")
-		githubTable = collectGithubPackages(*githubToken, owners...)
+		githubTable = collectGithubPackages(*githubToken, owners)
 		lock.Done()
 	}()
 	go func() {
 		owners := strings.Split(strings.ReplaceAll(*npmOwners, " ", ""), ",")
-		npmTable = collectNpmPackages(owners...)
+		npmTable = collectNpmPackages(owners)
 		lock.Done()
 	}()
 	lock.Wait()
@@ -38,7 +38,7 @@ func main() {
 	fmt.Print(npmTable.String())
 }
 
-func collectNpmPackages(owners ...string) internal.Table {
+func collectNpmPackages(owners []string) internal.Table {
 	t := internal.Table{}
 	t.Headers(
 		"PACKAGE",
@@ -62,12 +62,12 @@ func collectNpmPackages(owners ...string) internal.Table {
 			link,
 		)
 
-	}, owners...)
+	}, owners)
 	t.Sort(1, 2)
 	return t
 }
 
-func collectGithubPackages(token string, owners ...string) internal.Table {
+func collectGithubPackages(token string, owners []string) internal.Table {
 	t := internal.Table{}
 	t.Headers(
 		"REPO",
@@ -94,7 +94,7 @@ func collectGithubPackages(token string, owners ...string) internal.Table {
 			r.Today,
 			fmt.Sprintf("https://github.com/%v/%v/graphs/traffic", r.Owner, r.Name),
 		)
-	}, token, owners...)
+	}, token, owners)
 	t.Sort(1, 3, 2)
 	return t
 }
