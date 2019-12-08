@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+var zero = time.Now().Truncate(time.Millisecond).UnixNano() / 1e6
+
 var DefaultLoggingClient = NewLoggingClient(&http.Client{
 	Transport: http.DefaultTransport,
 })
@@ -22,8 +24,9 @@ func (w *loggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 	}
 
 	message := fmt.Sprintf(
-		"%v %4vms  %v\u001b[0m\n",
+		"%v %v+%vms %v\u001b[0m\n",
 		res.StatusCode,
+		start.Truncate(time.Millisecond).UnixNano()/1e6-zero,
 		time.Since(start).Truncate(time.Millisecond).Nanoseconds()/1e6,
 		req.URL.String(),
 	)
