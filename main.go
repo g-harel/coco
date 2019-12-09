@@ -12,7 +12,11 @@ import (
 
 var githubToken = flag.String("github-token", "", "GitHub API token")
 var githubOwners = flag.String("github-owner", "", "List of GitHub owners whose repos to query (comma separated).")
+var githubViews = flag.Int("github-views", 0, "Show repos if they have this quantity of views.")
+var githubToday = flag.Int("github-today", 0, "Show repos if they have this quantity of views today.")
+
 var npmOwners = flag.String("npm-owner", "", "List of NPM owners whose packages to query (comma separated).")
+var npmWeekly = flag.Int("npm-weekly", 0, "Show repos if they have this quantity of weekly downloads.")
 
 func main() {
 	flag.Parse()
@@ -51,7 +55,7 @@ func collectNpmPackages(owners []string) internal.Table {
 			internal.LogError("%v\n", err)
 			return
 		}
-		if p.Weekly < 12 {
+		if p.Weekly < *npmWeekly {
 			return
 		}
 		link := "https://npmjs.com/package/" + p.Name
@@ -81,10 +85,7 @@ func collectGithubPackages(token string, owners []string) internal.Table {
 			internal.LogError("%v\n", err)
 			return
 		}
-		if r.Views == 0 {
-			return
-		}
-		if r.Today < 2 && r.Views < 4 {
+		if r.Today < *githubToday && r.Views < *githubViews {
 			return
 		}
 		t.Add(
