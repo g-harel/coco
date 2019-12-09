@@ -8,15 +8,8 @@ import (
 
 	"github.com/g-harel/coco/collectors"
 	"github.com/g-harel/coco/internal"
+	"github.com/g-harel/coco/internal/flags"
 )
-
-var githubToken = flag.String("github-token", "", "GitHub API token")
-var githubOwners = flag.String("github-owner", "", "List of GitHub owners whose repos to query (comma separated).")
-var githubViews = flag.Int("github-views", 0, "Show repos if they have this quantity of views.")
-var githubToday = flag.Int("github-today", 0, "Show repos if they have this quantity of views today.")
-
-var npmOwners = flag.String("npm-owner", "", "List of NPM owners whose packages to query (comma separated).")
-var npmWeekly = flag.Int("npm-weekly", 0, "Show repos if they have this quantity of weekly downloads.")
 
 func main() {
 	flag.Parse()
@@ -27,12 +20,12 @@ func main() {
 	lock := sync.WaitGroup{}
 	lock.Add(2)
 	go func() {
-		owners := strings.Split(strings.ReplaceAll(*githubOwners, " ", ""), ",")
-		githubTable = collectGithubPackages(*githubToken, owners)
+		owners := strings.Split(strings.ReplaceAll(*flags.GithubOwners, " ", ""), ",")
+		githubTable = collectGithubPackages(*flags.GithubToken, owners)
 		lock.Done()
 	}()
 	go func() {
-		owners := strings.Split(strings.ReplaceAll(*npmOwners, " ", ""), ",")
+		owners := strings.Split(strings.ReplaceAll(*flags.NpmOwners, " ", ""), ",")
 		npmTable = collectNpmPackages(owners)
 		lock.Done()
 	}()
@@ -55,7 +48,7 @@ func collectNpmPackages(owners []string) internal.Table {
 			internal.LogError("%v\n", err)
 			return
 		}
-		if p.Weekly < *npmWeekly {
+		if p.Weekly < *flags.NpmWeekly {
 			return
 		}
 		link := "https://npmjs.com/package/" + p.Name
@@ -85,7 +78,7 @@ func collectGithubPackages(token string, owners []string) internal.Table {
 			internal.LogError("%v\n", err)
 			return
 		}
-		if r.Today < *githubToday && r.Views < *githubViews {
+		if r.Today < *flags.GithubToday && r.Views < *flags.GithubViews {
 			return
 		}
 		t.Add(

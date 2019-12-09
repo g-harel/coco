@@ -3,7 +3,10 @@ package internal
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/g-harel/coco/internal/flags"
 )
 
 var zero = time.Now().Truncate(time.Millisecond).UnixNano() / 1e6
@@ -24,14 +27,14 @@ func (w *loggingRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 	}
 
 	message := fmt.Sprintf(
-		"%v %v+%vms %v\u001b[0m\n",
+		"%v %v+%vms %v\n",
 		res.StatusCode,
 		start.Truncate(time.Millisecond).UnixNano()/1e6-zero,
 		time.Since(start).Truncate(time.Millisecond).Nanoseconds()/1e6,
 		req.URL.String(),
 	)
 	if res.StatusCode == 200 {
-		fmt.Print(message)
+		LogInfo(message)
 	} else {
 		LogError(message)
 	}
@@ -48,7 +51,16 @@ func NewLoggingClient(original *http.Client) *http.Client {
 	}
 }
 
+func LogInfo(format string, a ...interface{}) {
+	if *flags.LogInfo {
+		msg := fmt.Sprintf(format, a...)
+		fmt.Printf("\u001b[38;5;244m%v\u001b[0m", msg)
+	}
+}
+
 func LogError(format string, a ...interface{}) {
-	err := fmt.Sprintf(format, a...)
-	fmt.Printf("\u001b[31m%v\u001b[0m", err)
+	if *flags.LogErrors {
+		err := fmt.Sprintf(format, a...)
+		fmt.Fprintf(os.Stderr, "\u001b[31m%v\u001b[0m", err)
+	}
 }

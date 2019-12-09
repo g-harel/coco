@@ -4,9 +4,9 @@ TODO
 - optional npm/github (with help if none)
 - consistent error handling
 - rate limiting
-- control logging with flags
 - add godoc/documentation
 - add example usages in readme
+- add github flag for stars
 
  -->
 
@@ -29,9 +29,13 @@ Flags:
   -github-today int
         Show repos if they have this quantity of views today.
   -github-token string
-        GitHub API token
+        GitHub API token.
   -github-views int
         Show repos if they have this quantity of views.
+  -log-error
+        Log errors. (default true)
+  -log-info
+        Log miscellaneous info.
   -npm-owner string
         List of NPM owners whose packages to query (comma separated).
   -npm-weekly int
