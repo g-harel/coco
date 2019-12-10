@@ -78,7 +78,9 @@ func collectGithubPackages(token string, owners []string) internal.Table {
 			internal.LogError("%v\n", err)
 			return
 		}
-		if r.Today < *flags.GithubToday && r.Views < *flags.GithubViews {
+		if r.Today < *flags.GithubToday &&
+			r.Views < *flags.GithubViews &&
+			r.Stars < *flags.GithubStars {
 			return
 		}
 		t.Add(
