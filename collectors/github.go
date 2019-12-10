@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/g-harel/coco/internal"
+	"github.com/g-harel/coco/internal/exec"
 )
 
 type GithubRepo struct {
@@ -24,7 +25,7 @@ type GithubRepo struct {
 type GithubRepoHandler func(*GithubRepo, error)
 
 func GithubRepos(f GithubRepoHandler, token string, owners []string) {
-	internal.ExecParallel(len(owners), func(i int) {
+	exec.Parallel(len(owners), func(i int) {
 		githubHandleOwner(f, token, owners[i])
 	})
 }
@@ -74,7 +75,7 @@ func githubHandleOwner(f GithubRepoHandler, token, owner string) {
 	}
 
 	remainingPages := last - 1
-	internal.ExecParallel(remainingPages, func(n int) {
+	exec.Parallel(remainingPages, func(n int) {
 		nthPageURL, _ := url.Parse(lastURL.String())
 		query := nthPageURL.Query()
 		query.Del("page")
@@ -97,7 +98,7 @@ func githubHandleOwner(f GithubRepoHandler, token, owner string) {
 }
 
 func githubHandleRepoListResponse(f GithubRepoHandler, token string, r githubRepoListResponse) {
-	internal.ExecParallel(len(r), func(n int) {
+	exec.Parallel(len(r), func(n int) {
 		convertedHandler := githubConverterFunc(f, r[n].Owner.Login, r[n].Name, r[n].Stars)
 		convertedHandler(githubFetchRepoViews(token, r[n].Owner.Login, r[n].Name))
 	})

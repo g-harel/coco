@@ -1,16 +1,16 @@
-package internal
+package exec
 
 import "sync"
 
 var globalMutex = sync.Mutex{}
 
-func ExecSafe(f func()) {
+func Safe(f func()) {
 	globalMutex.Lock()
 	f()
 	globalMutex.Unlock()
 }
 
-func ExecParallel(count int, f func(n int)) {
+func Parallel(count int, f func(n int)) {
 	wg := sync.WaitGroup{}
 	wg.Add(count)
 	for i := 0; i < count; i++ {

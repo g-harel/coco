@@ -2,9 +2,11 @@ package collectors
 
 import (
 	"fmt"
-	"github.com/g-harel/coco/internal"
 	"net/http"
 	"sync"
+
+	"github.com/g-harel/coco/internal"
+	"github.com/g-harel/coco/internal/exec"
 )
 
 type NpmPackage struct {
@@ -16,7 +18,7 @@ type NpmPackage struct {
 type NpmPackageHandler func(*NpmPackage, error)
 
 func NpmPackages(f NpmPackageHandler, owners []string) {
-	internal.ExecParallel(len(owners), func(i int) {
+	exec.Parallel(len(owners), func(i int) {
 		npmHandleOwner(npmConverterFunc(f), owners[i])
 	})
 }
@@ -58,7 +60,7 @@ func npmHandleOwner(f npmPackageResponseHandler, owner string) {
 	}()
 
 	remainingPages := firstPage.Packages.Total / firstPage.Pagination.PerPage
-	internal.ExecParallel(remainingPages, func(n int) {
+	exec.Parallel(remainingPages, func(n int) {
 		nthPage, err := npmFetchOwner(owner, n+1)
 		if err != nil {
 			f(nil, fmt.Errorf("fetch page %v: %v", n, err))
@@ -71,7 +73,7 @@ func npmHandleOwner(f npmPackageResponseHandler, owner string) {
 }
 
 func npmHandleOwnerResponse(f npmPackageResponseHandler, r *npmOwnerResponse) {
-	internal.ExecParallel(len(r.Packages.Objects), func(n int) {
+	exec.Parallel(len(r.Packages.Objects), func(n int) {
 		f(npmFetchPackage(r.Packages.Objects[n].Name))
 	})
 }

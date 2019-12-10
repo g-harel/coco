@@ -9,13 +9,14 @@ import (
 	"github.com/g-harel/coco/collectors"
 	"github.com/g-harel/coco/internal"
 	"github.com/g-harel/coco/internal/flags"
+	"github.com/g-harel/coco/internal/table"
 )
 
 func main() {
 	flag.Parse()
 
-	githubTable := internal.Table{}
-	npmTable := internal.Table{}
+	githubTable := table.Table{}
+	npmTable := table.Table{}
 
 	lock := sync.WaitGroup{}
 	lock.Add(2)
@@ -35,8 +36,8 @@ func main() {
 	fmt.Print(npmTable.String())
 }
 
-func collectNpmPackages(owners []string) internal.Table {
-	t := internal.Table{}
+func collectNpmPackages(owners []string) table.Table {
+	t := table.Table{}
 	t.Headers(
 		"PACKAGE",
 		"DOWNLOADS",
@@ -64,8 +65,8 @@ func collectNpmPackages(owners []string) internal.Table {
 	return t
 }
 
-func collectGithubPackages(token string, owners []string) internal.Table {
-	t := internal.Table{}
+func collectGithubPackages(token string, owners []string) table.Table {
+	t := table.Table{}
 	t.Headers(
 		"REPO",
 		"VIEWS",

@@ -1,17 +1,10 @@
-package internal
+package table
 
 import (
-	"strings"
 	"testing"
-)
 
-func assertEqual(t *testing.T, actual, expected string) {
-	actual = strings.ReplaceAll(actual, "\n", "\\n")
-	expected = strings.ReplaceAll(expected, "\n", "\\n")
-	if actual != expected {
-		t.Errorf("actual/expected don't match: \n  actual: '%v'\nexpected: '%v'", actual, expected)
-	}
-}
+	"github.com/g-harel/coco/internal/assert"
+)
 
 func TestTableFormatCell(t *testing.T) {
 	tt := []struct {
@@ -31,7 +24,7 @@ func TestTableFormatCell(t *testing.T) {
 	for i := 0; i < len(tt); i++ {
 		tc := tt[i]
 		t.Run(tc.Description, func(t *testing.T) {
-			assertEqual(t, tableFormatCell(tc.Input), tc.Expected)
+			assert.Equal(t, formatCell(tc.Input), tc.Expected)
 		})
 	}
 }
@@ -43,7 +36,7 @@ func TestFormat(t *testing.T) {
 		tb.Add(0, "a", 1234)
 		tb.Add("aa aaaa aa aa a")
 		tb.Sort(1, 1, 12)
-		assertEqual(t, tb.String(),
+		assert.Equal(t, tb.String(),
 			""+
 				"+-----------------+-----+-------+\n"+
 				"| TEST            | ABC | 1234  |\n"+
@@ -60,18 +53,20 @@ func TestFormat(t *testing.T) {
 		tb.Add(1, 1, 1)
 		tb.Add(1, 1, 1, 1)
 		tb.Add(1, 1, nil, 1)
+		tb.Add(nil, "b", 1, "b")
 		tb.Add(nil, nil, 2)
 		tb.Add(nil, "a", 1, "a")
 		tb.Sort(2, 1)
-		assertEqual(t, tb.String(),
+		assert.Equal(t, tb.String(),
 			""+
 				"+---+---+---+---+\n"+
 				"| A | B | C | D |\n"+
 				"+---+---+---+---+\n"+
 				"|   |   | 2 |   |\n"+
-				"|   | a | 1 | a |\n"+
 				"| 1 | 1 | 1 | 1 |\n"+
 				"| 1 | 1 | 1 |   |\n"+
+				"|   | a | 1 | a |\n"+
+				"|   | b | 1 | b |\n"+
 				"| 1 | 1 |   | 1 |\n"+
 				"| 1 |   |   |   |\n"+
 				"+---+---+---+---+\n")
