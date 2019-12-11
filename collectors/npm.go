@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/g-harel/coco/internal"
+	"github.com/g-harel/coco/internal/httpc"
 	"github.com/g-harel/coco/internal/exec"
 )
 
@@ -101,7 +101,7 @@ func npmConverterFunc(f NpmPackageHandler) npmPackageResponseHandler {
 
 func npmFetchOwner(owner string, page int) (*npmOwnerResponse, error) {
 	res := &npmOwnerResponse{}
-	_, err := internal.HTTPGet(
+	_, err := httpc.Get(
 		fmt.Sprintf("https://www.npmjs.com/~%v?page=%v", owner, page),
 		http.Header{"x-spiferack": []string{"1"}},
 		res,
@@ -114,7 +114,7 @@ func npmFetchOwner(owner string, page int) (*npmOwnerResponse, error) {
 
 func npmFetchPackage(name string) (*npmPackageResponse, error) {
 	res := &npmPackageResponse{}
-	_, err := internal.HTTPGet(
+	_, err := httpc.Get(
 		fmt.Sprintf("https://www.npmjs.com/package/%v", name),
 		http.Header{"x-spiferack": []string{"1"}},
 		res,

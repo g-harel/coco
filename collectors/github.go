@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/g-harel/coco/internal"
 	"github.com/g-harel/coco/internal/exec"
+	"github.com/g-harel/coco/internal/httpc"
 )
 
 type GithubRepo struct {
@@ -82,7 +82,7 @@ func githubHandleOwner(f GithubRepoHandler, token, owner string) {
 		query.Add("page", strconv.Itoa(n+2))
 		nthPageURL.RawQuery = query.Encode()
 		nthPage := githubRepoListResponse{}
-		_, err := internal.HTTPGet(
+		_, err := httpc.Get(
 			nthPageURL.String(),
 			githubTokenHeader(token),
 			&nthPage,
@@ -149,7 +149,7 @@ func githubParsePaginationHeaderLastURL(h *http.Header) (*url.URL, error) {
 
 func githubFetchInitialOwnerRepo(token, owner string) (githubRepoListResponse, *url.URL, error) {
 	res := githubRepoListResponse{}
-	h, err := internal.HTTPGet(
+	h, err := httpc.Get(
 		fmt.Sprintf("https://api.github.com/users/%v/repos?page=1", owner),
 		githubTokenHeader(token),
 		&res,
@@ -167,7 +167,7 @@ func githubFetchInitialOwnerRepo(token, owner string) (githubRepoListResponse, *
 
 func githubFetchRepoViews(token, owner, name string) (*githubRepoViewsResponse, error) {
 	res := &githubRepoViewsResponse{}
-	_, err := internal.HTTPGet(
+	_, err := httpc.Get(
 		fmt.Sprintf("https://api.github.com/repos/%v/%v/traffic/views", owner, name),
 		githubTokenHeader(token),
 		res,

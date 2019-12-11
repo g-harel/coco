@@ -7,8 +7,8 @@ import (
 	"sync"
 
 	"github.com/g-harel/coco/collectors"
-	"github.com/g-harel/coco/internal"
 	"github.com/g-harel/coco/internal/flags"
+	"github.com/g-harel/coco/internal/log"
 	"github.com/g-harel/coco/internal/table"
 )
 
@@ -46,7 +46,7 @@ func collectNpmPackages(owners []string) table.Table {
 	)
 	collectors.NpmPackages(func(p *collectors.NpmPackage, err error) {
 		if err != nil {
-			internal.LogError("%v\n", err)
+			log.Error("%v\n", err)
 			return
 		}
 		if p.Weekly < *flags.NpmWeekly {
@@ -76,7 +76,7 @@ func collectGithubPackages(token string, owners []string) table.Table {
 	)
 	collectors.GithubRepos(func(r *collectors.GithubRepo, err error) {
 		if err != nil {
-			internal.LogError("%v\n", err)
+			log.Error("%v\n", err)
 			return
 		}
 		if r.Today < *flags.GithubToday &&
