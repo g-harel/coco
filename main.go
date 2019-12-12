@@ -6,7 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/g-harel/coco/collectors"
+	"github.com/g-harel/coco/collectors/github"
+	"github.com/g-harel/coco/collectors/npm"
 	"github.com/g-harel/coco/internal/flags"
 	"github.com/g-harel/coco/internal/log"
 	"github.com/g-harel/coco/internal/table"
@@ -44,7 +45,7 @@ func collectNpmPackages(owners []string) table.Table {
 		"TOTAL",
 		"LINK",
 	)
-	collectors.NpmPackages(func(p *collectors.NpmPackage, err error) {
+	npm.Packages(func(p *npm.Package, err error) {
 		if err != nil {
 			log.Error("%v\n", err)
 			return
@@ -74,7 +75,7 @@ func collectGithubPackages(token string, owners []string) table.Table {
 		"TODAY",
 		"LINK",
 	)
-	collectors.GithubRepos(func(r *collectors.GithubRepo, err error) {
+	github.Repos(func(r *github.Repo, err error) {
 		if err != nil {
 			log.Error("%v\n", err)
 			return

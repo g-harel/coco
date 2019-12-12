@@ -2,7 +2,6 @@
 
 TODO
 - optional npm/github (with help if none)
-- consistent error handling
 - rate limiting
 - add godoc/documentation
 - add example usages in readme
