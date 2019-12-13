@@ -16,7 +16,7 @@ type Repo struct {
 
 type RepoHandler func(*Repo, error)
 
-type repoListResponse []struct {
+type reposResponse []struct {
 	Name  string `json:"name"`
 	Owner struct {
 		Login string `json:"login"`
@@ -24,7 +24,7 @@ type repoListResponse []struct {
 	Stars int `json:"stargazers_count"`
 }
 
-type repoViewsResponse struct {
+type viewsResponse struct {
 	Count   int `json:"count"`
 	Uniques int `json:"uniques"`
 	Views   []struct {
@@ -33,29 +33,18 @@ type repoViewsResponse struct {
 	} `json:"views"`
 }
 
-type repoResponseHandler func(*repoViewsResponse, error)
-
-func converterFunc(f RepoHandler, owner, name string, stars int) repoResponseHandler {
-	return func(r *repoViewsResponse, err error) {
-		if err != nil {
-			f(nil, err)
-			return
+func convert(v *viewsResponse) *Repo {
+	today := 0
+	nowPrefix := time.Now().Format("2006-01-02")
+	for i := 0; i < len(v.Views); i++ {
+		if strings.HasPrefix(v.Views[i].Timestamp, nowPrefix) {
+			today += v.Views[i].Count
 		}
-		today := 0
-		nowPrefix := time.Now().Format("2006-01-02")
-		for i := 0; i < len(r.Views); i++ {
-			if strings.HasPrefix(r.Views[i].Timestamp, nowPrefix) {
-				today += r.Views[i].Count
-			}
-		}
-		p := &Repo{
-			Name:   name,
-			Owner:  owner,
-			Stars:  stars,
-			Views:  r.Count,
-			Today:  today,
-			Unique: r.Uniques,
-		}
-		f(p, nil)
 	}
+	r := &Repo{
+		Views:  v.Count,
+		Today:  today,
+		Unique: v.Uniques,
+	}
+	return r
 }

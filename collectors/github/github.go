@@ -2,71 +2,100 @@ package github
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
-	"sync"
+	"strings"
 
 	"github.com/g-harel/coco/internal/exec"
 	"github.com/g-harel/coco/internal/httpc"
 )
 
 func Repos(f RepoHandler, token string, owners []string) {
-	exec.Parallel(len(owners), func(i int) {
-		handleOwner(f, token, owners[i])
+	exec.ParallelN(len(owners), func(n int) {
+		handleOwner(f, token, owners[n])
 	})
 }
 
 func handleOwner(f RepoHandler, token, owner string) {
-	firstPage, lastURL, err := fetchInitialOwnerRepo(token, owner)
+	firstPage, responseHeaders, err := fetchRepos(token, owner)
 	if err != nil {
 		f(nil, err)
 		return
 	}
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		handleRepoListResponse(f, token, firstPage)
-		wg.Done()
-	}()
+	exec.Parallel(
+		func() {
+			handleReposResponse(f, token, firstPage)
+		},
+		func() {
+			pages, err := generatePaginatedURLs(responseHeaders)
+			if err != nil {
+				f(nil, err)
+				return
+			}
+			exec.ParallelN(len(pages)-1, func(n int) {
+				nthPage := reposResponse{}
+				_, err := httpc.Get(
+					pages[n+1],
+					tokenHeader(token),
+					&nthPage,
+				)
+				if err != nil {
+					f(nil, fmt.Errorf("fetch owner %v page %v: %v", owner, n+1, err))
+				} else {
+					handleReposResponse(f, token, nthPage)
+				}
+			})
+		},
+	)
+}
 
-	if lastURL == nil {
-		wg.Wait()
-		return
+func handleReposResponse(f RepoHandler, token string, l reposResponse) {
+	exec.ParallelN(len(l), func(n int) {
+		v, err := fetchViews(token, l[n].Owner.Login, l[n].Name)
+		if err != nil {
+			f(nil, err)
+		} else {
+			r := convert(v)
+			r.Owner = l[n].Owner.Login
+			r.Name = l[n].Name
+			r.Stars = l[n].Stars
+			f(r, nil)
+		}
+	})
+}
+
+func generatePaginatedURLs(h *http.Header) ([]string, error) {
+	links := strings.Split(h.Get("Link"), ",")
+	rawLastURL := ""
+	for i := 0; i < len(links); i++ {
+		if strings.HasSuffix(links[i], `>; rel="last"`) {
+			rawURL := strings.TrimSpace(links[i])
+			rawURL = strings.TrimPrefix(rawURL, "<")
+			rawLastURL = strings.TrimSuffix(rawURL, `>; rel="last"`)
+		}
 	}
-
-	last, err := strconv.Atoi(lastURL.Query().Get("page"))
+	if rawLastURL == "" {
+		// Pagination header is missing when the response contains all data.
+		return []string{rawLastURL}, nil
+	}
+	lastURL, err := url.Parse(rawLastURL)
 	if err != nil {
-		f(nil, fmt.Errorf("parse last pagination index: %v", err))
-		return
+		return nil, fmt.Errorf("parse pagination url: %v", err)
 	}
-
-	remainingPages := last - 1
-	exec.Parallel(remainingPages, func(n int) {
+	lastPageIndex, err := strconv.Atoi(lastURL.Query().Get("page"))
+	if err != nil {
+		return nil, fmt.Errorf("parse last pagination index: %v", err)
+	}
+	urls := []string{}
+	for i := 1; i <= lastPageIndex; i++ {
 		nthPageURL, _ := url.Parse(lastURL.String())
 		query := nthPageURL.Query()
 		query.Del("page")
-		query.Add("page", strconv.Itoa(n+2))
+		query.Add("page", strconv.Itoa(i))
 		nthPageURL.RawQuery = query.Encode()
-		nthPage := repoListResponse{}
-		_, err := httpc.Get(
-			nthPageURL.String(),
-			tokenHeader(token),
-			&nthPage,
-		)
-		if err != nil {
-			f(nil, fmt.Errorf("fetch owner %v page %v: %v", owner, n+1, err))
-		} else {
-			handleRepoListResponse(f, token, nthPage)
-		}
-	})
-
-	wg.Wait()
-}
-
-func handleRepoListResponse(f RepoHandler, token string, r repoListResponse) {
-	exec.Parallel(len(r), func(n int) {
-		convertedHandler := converterFunc(f, r[n].Owner.Login, r[n].Name, r[n].Stars)
-		convertedHandler(fetchRepoViews(token, r[n].Owner.Login, r[n].Name))
-	})
+		urls = append(urls, nthPageURL.String())
+	}
+	return urls, nil
 }

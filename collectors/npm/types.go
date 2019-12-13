@@ -28,25 +28,17 @@ type packageResponse struct {
 	} `json:"downloads"`
 }
 
-type packageResponseHandler func(*packageResponse, error)
-
-func converterFunc(f PackageHandler) packageResponseHandler {
-	return func(r *packageResponse, err error) {
-		if err != nil {
-			f(nil, err)
-			return
-		}
-		p := &Package{
-			Name:   r.Package,
-			Weekly: 0,
-			Total:  0,
-		}
-		if len(r.Downloads) > 0 {
-			p.Weekly = r.Downloads[len(r.Downloads)-1].Downloads
-			for i := 0; i < len(r.Downloads); i++ {
-				p.Total += r.Downloads[i].Downloads
-			}
-		}
-		f(p, nil)
+func convert(r *packageResponse) *Package {
+	p := &Package{
+		Name:   r.Package,
+		Weekly: 0,
+		Total:  0,
 	}
+	if len(r.Downloads) > 0 {
+		p.Weekly = r.Downloads[len(r.Downloads)-1].Downloads
+		for i := 0; i < len(r.Downloads); i++ {
+			p.Total += r.Downloads[i].Downloads
+		}
+	}
+	return p
 }
