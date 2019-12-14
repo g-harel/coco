@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/g-harel/coco/collectors/github"
@@ -22,13 +21,11 @@ func main() {
 	lock := sync.WaitGroup{}
 	lock.Add(2)
 	go func() {
-		owners := strings.Split(strings.ReplaceAll(*flags.GithubOwners, " ", ""), ",")
-		githubTable = collectGithubPackages(*flags.GithubToken, owners)
+		githubTable = collectGithubPackages(*flags.GithubToken, flags.GithubOwners)
 		lock.Done()
 	}()
 	go func() {
-		owners := strings.Split(strings.ReplaceAll(*flags.NpmOwners, " ", ""), ",")
-		npmTable = collectNpmPackages(owners)
+		npmTable = collectNpmPackages(flags.NpmOwners)
 		lock.Done()
 	}()
 	lock.Wait()

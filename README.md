@@ -1,7 +1,6 @@
 <!--
 
 TODO
-- optional npm/github (with help if none)
 - rate limiting
 - add godoc/documentation
 - add example usages in readme
@@ -22,8 +21,8 @@ $ go get -u github.com/g-harel/coco
 Usage: coco [flags...]
 
 Flags:
-  -github-owner string
-        List of GitHub owners whose repos to query (comma separated).
+  -github-owner value
+        GitHub owner to query.
   -github-stars int
         Show repos if they have this quantity of stars. (default 1)
   -github-today int
@@ -36,8 +35,8 @@ Flags:
         Log errors. (default true)
   -log-info
         Log miscellaneous info.
-  -npm-owner string
-        List of NPM owners whose packages to query (comma separated).
+  -npm-owner value
+        NPM owners whose packages to query.
   -npm-weekly int
         Show repos if they have this quantity of weekly downloads. (default 1)
 
