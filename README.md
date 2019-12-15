@@ -1,7 +1,6 @@
 <!--
 
 TODO
-- rate limiting
 - add godoc/documentation
 - add example usages in readme
 
@@ -39,6 +38,8 @@ Flags:
         NPM owners whose packages to query.
   -npm-weekly int
         Show repos if they have this quantity of weekly downloads. (default 1)
+  -rate-limit int
+        Maximum number of requests per second by all collectors. (default 999)
 
 GitHub traffic can only be collected from repositories that the token grants push access to.
 ```

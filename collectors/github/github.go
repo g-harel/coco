@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/g-harel/coco/internal/exec"
-	"github.com/g-harel/coco/internal/httpc"
 )
 
 func Repos(f RepoHandler, token string, owners []string) {
@@ -18,7 +17,7 @@ func Repos(f RepoHandler, token string, owners []string) {
 }
 
 func handleOwner(f RepoHandler, token, owner string) {
-	firstPage, responseHeaders, err := fetchRepos(token, owner)
+	firstPage, responseHeaders, err := fetchFirstRepos(token, owner)
 	if err != nil {
 		f(nil, err)
 		return
@@ -36,11 +35,7 @@ func handleOwner(f RepoHandler, token, owner string) {
 			}
 			exec.ParallelN(len(pages)-1, func(n int) {
 				nthPage := reposResponse{}
-				_, err := httpc.Get(
-					pages[n+1],
-					tokenHeader(token),
-					&nthPage,
-				)
+				_, err := fetchGeneric(pages[n+1], token, &nthPage)
 				if err != nil {
 					f(nil, fmt.Errorf("fetch owner %v page %v: %v", owner, n+1, err))
 				} else {

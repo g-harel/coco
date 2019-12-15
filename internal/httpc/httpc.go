@@ -7,10 +7,12 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/g-harel/coco/internal/flags"
 	"github.com/g-harel/coco/internal/log"
 )
 
 var zero = time.Now().Truncate(time.Millisecond).UnixNano() / 1e6
+var rateLimiter = newLimiter(*flags.RateLimit)
 
 func logHTTP(url *url.URL, res *http.Response, start time.Time) {
 	message := fmt.Sprintf(
@@ -28,6 +30,8 @@ func logHTTP(url *url.URL, res *http.Response, start time.Time) {
 }
 
 func Get(rawUrl string, headers http.Header, body interface{}) (*http.Header, error) {
+	rateLimiter.Wait()
+
 	u, err := url.Parse(rawUrl)
 	if err != nil {
 		return nil, err
