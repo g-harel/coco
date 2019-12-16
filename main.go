@@ -1,95 +1,28 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"sync"
 
+	"github.com/g-harel/coco/collectors"
 	"github.com/g-harel/coco/collectors/github"
 	"github.com/g-harel/coco/collectors/npm"
-	"github.com/g-harel/coco/internal/flags"
+	"github.com/g-harel/coco/internal/exec"
 	"github.com/g-harel/coco/internal/log"
-	"github.com/g-harel/coco/internal/table"
 )
 
 func main() {
-	flag.Parse()
+	c := []collectors.Collector{
+		&github.Collector{},
+		&npm.Collector{},
+	}
 
-	githubTable := table.Table{}
-	npmTable := table.Table{}
-
-	lock := sync.WaitGroup{}
-	lock.Add(2)
-	go func() {
-		githubTable = collectGithubPackages(*flags.GithubToken, flags.GithubOwners)
-		lock.Done()
-	}()
-	go func() {
-		npmTable = collectNpmPackages(flags.NpmOwners)
-		lock.Done()
-	}()
-	lock.Wait()
-
-	fmt.Print(githubTable.String())
-	fmt.Print(npmTable.String())
-}
-
-func collectNpmPackages(owners []string) table.Table {
-	t := table.Table{}
-	t.Headers(
-		"PACKAGE",
-		"DOWNLOADS",
-		"TOTAL",
-		"LINK",
-	)
-	npm.Packages(func(p *npm.Package, err error) {
-		if err != nil {
+	exec.ParallelN(len(c), func(n int) {
+		c[n].Collect(func(err error) {
 			log.Error("%v\n", err)
-			return
-		}
-		if p.Weekly < *flags.NpmWeekly {
-			return
-		}
-		link := "https://npmjs.com/package/" + p.Name
-		t.Add(
-			p.Name,
-			p.Weekly,
-			p.Total,
-			link,
-		)
+		})
+	})
 
-	}, owners)
-	t.Sort(1, 2)
-	return t
-}
-
-func collectGithubPackages(token string, owners []string) table.Table {
-	t := table.Table{}
-	t.Headers(
-		"REPO",
-		"VIEWS",
-		"UNIQUE",
-		"TODAY",
-		"LINK",
-	)
-	github.Repos(func(r *github.Repo, err error) {
-		if err != nil {
-			log.Error("%v\n", err)
-			return
-		}
-		if r.Today < *flags.GithubToday &&
-			r.Views < *flags.GithubViews &&
-			r.Stars < *flags.GithubStars {
-			return
-		}
-		t.Add(
-			fmt.Sprintf("%v*%v", r.Name, r.Stars),
-			r.Views,
-			r.Unique,
-			r.Today,
-			fmt.Sprintf("https://github.com/%v/%v/graphs/traffic", r.Owner, r.Name),
-		)
-	}, token, owners)
-	t.Sort(1, 3, 2)
-	return t
+	for i := 0; i < len(c); i++ {
+		fmt.Print(c[i].Format())
+	}
 }

@@ -20,8 +20,8 @@ func fetchOwner(owner string, page int) (*ownerResponse, error) {
 	return res, nil
 }
 
-func fetchPackage(name string) (*packageResponse, error) {
-	res := &packageResponse{}
+func fetchPackage(name string) (*pkgResponse, error) {
+	res := &pkgResponse{}
 	_, err := httpc.Get(
 		fmt.Sprintf("https://www.npmjs.com/package/%v", name),
 		http.Header{"x-spiferack": []string{"1"}},

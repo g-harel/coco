@@ -13,10 +13,10 @@ func newLimiter(max int) *limiter {
 	ticker := make(chan bool)
 	go func() {
 		for {
-			time.Sleep(time.Second)
 			for i := 0; i < max; i++ {
 				ticker <- true
 			}
+			time.Sleep(time.Second)
 		}
 	}()
 	return &limiter{max, ticker}

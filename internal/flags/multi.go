@@ -11,11 +11,6 @@ func (m *multiFlag) String() string {
 }
 
 func (m *multiFlag) Set(value string) error {
-	for i := 0; i < len(*m); i++ {
-		if value == (*m)[i] {
-			return nil
-		}
-	}
 	*m = append(*m, value)
 	return nil
 }

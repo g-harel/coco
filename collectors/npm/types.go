@@ -1,12 +1,12 @@
 package npm
 
-type Package struct {
+type pkg struct {
 	Name   string
 	Weekly int
 	Total  int
 }
 
-type PackageHandler func(*Package, error)
+type pkgHandler func(*pkg, error)
 
 type ownerResponse struct {
 	Packages struct {
@@ -21,15 +21,15 @@ type ownerResponse struct {
 	}
 }
 
-type packageResponse struct {
+type pkgResponse struct {
 	Package   string `json:"package"`
 	Downloads []struct {
 		Downloads int `json:"downloads"`
 	} `json:"downloads"`
 }
 
-func convert(r *packageResponse) *Package {
-	p := &Package{
+func convert(r *pkgResponse) *pkg {
+	p := &pkg{
 		Name:   r.Package,
 		Weekly: 0,
 		Total:  0,

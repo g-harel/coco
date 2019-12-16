@@ -10,13 +10,7 @@ import (
 	"github.com/g-harel/coco/internal/exec"
 )
 
-func Repos(f RepoHandler, token string, owners []string) {
-	exec.ParallelN(len(owners), func(n int) {
-		handleOwner(f, token, owners[n])
-	})
-}
-
-func handleOwner(f RepoHandler, token, owner string) {
+func handleOwner(f repoHandler, token, owner string) {
 	firstPage, responseHeaders, err := fetchFirstRepos(token, owner)
 	if err != nil {
 		f(nil, err)
@@ -46,7 +40,7 @@ func handleOwner(f RepoHandler, token, owner string) {
 	)
 }
 
-func handleReposResponse(f RepoHandler, token string, l reposResponse) {
+func handleReposResponse(f repoHandler, token string, l reposResponse) {
 	exec.ParallelN(len(l), func(n int) {
 		v, err := fetchViews(token, l[n].Owner.Login, l[n].Name)
 		if err != nil {

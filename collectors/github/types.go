@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type Repo struct {
+type repo struct {
 	Name   string
 	Owner  string
 	Stars  int
@@ -14,7 +14,7 @@ type Repo struct {
 	Unique int
 }
 
-type RepoHandler func(*Repo, error)
+type repoHandler func(*repo, error)
 
 type reposResponse []struct {
 	Name  string `json:"name"`
@@ -33,7 +33,7 @@ type viewsResponse struct {
 	} `json:"views"`
 }
 
-func convert(v *viewsResponse) *Repo {
+func convert(v *viewsResponse) *repo {
 	today := 0
 	nowPrefix := time.Now().Format("2006-01-02")
 	for i := 0; i < len(v.Views); i++ {
@@ -41,7 +41,7 @@ func convert(v *viewsResponse) *Repo {
 			today += v.Views[i].Count
 		}
 	}
-	r := &Repo{
+	r := &repo{
 		Views:  v.Count,
 		Today:  today,
 		Unique: v.Uniques,

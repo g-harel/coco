@@ -6,13 +6,7 @@ import (
 	"github.com/g-harel/coco/internal/exec"
 )
 
-func Packages(f PackageHandler, owners []string) {
-	exec.ParallelN(len(owners), func(n int) {
-		handleOwner(f, owners[n])
-	})
-}
-
-func handleOwner(f PackageHandler, owner string) {
+func handleOwner(f pkgHandler, owner string) {
 	firstPage, err := fetchOwner(owner, 0)
 	if err != nil {
 		f(nil, err)
@@ -37,7 +31,7 @@ func handleOwner(f PackageHandler, owner string) {
 	)
 }
 
-func handleOwnerResponse(f PackageHandler, r *ownerResponse) {
+func handleOwnerResponse(f pkgHandler, r *ownerResponse) {
 	exec.ParallelN(len(r.Packages.Objects), func(n int) {
 		r, err := fetchPackage(r.Packages.Objects[n].Name)
 		if err != nil {
