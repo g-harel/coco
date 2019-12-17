@@ -1,8 +1,6 @@
 package table
 
-import (
-	"github.com/g-harel/coco/internal/exec"
-)
+import ()
 
 // Table holds table data that can be sorted and printed.
 type Table struct {
@@ -13,23 +11,17 @@ type Table struct {
 
 // Headers adds column headers.
 func (t *Table) Headers(data ...interface{}) {
-	exec.Safe(func() {
-		t.headers = data
-	})
+	t.headers = data
 }
 
 // Add appends a new row of data.
 func (t *Table) Add(data ...interface{}) {
-	exec.Safe(func() {
-		t.data = append(t.data, data)
-	})
+	t.data = append(t.data, data)
 }
 
 // Sort sets the columns to sort by when formating.
 func (t *Table) Sort(columnSortPriority ...int) {
-	exec.Safe(func() {
-		t.columnSortPriority = columnSortPriority
-	})
+	t.columnSortPriority = columnSortPriority
 }
 
 // String formats the table data to a string.

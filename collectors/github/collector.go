@@ -16,13 +16,19 @@ type Collector struct {
 }
 
 func (c *Collector) Collect(h collectors.ErrorHandler) {
+	if len(flags.GithubOwners) > 0 && *flags.GithubToken == "" {
+		h(fmt.Errorf("missing github token"))
+		return
+	}
 	exec.ParallelN(len(flags.GithubOwners), func(n int) {
 		handleOwner(func(r *repo, err error) {
 			if err != nil {
 				h(err)
-			} else {
-				c.repos = append(c.repos, r)
+				return
 			}
+			exec.Safe(func() {
+				c.repos = append(c.repos, r)
+			})
 		}, *flags.GithubToken, flags.GithubOwners[n])
 	})
 }

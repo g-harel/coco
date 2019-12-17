@@ -18,9 +18,11 @@ func (c *Collector) Collect(h collectors.ErrorHandler) {
 		handleOwner(func(r *pkg, err error) {
 			if err != nil {
 				h(err)
-			} else {
-				c.packages = append(c.packages, r)
+				return
 			}
+			exec.Safe(func() {
+				c.packages = append(c.packages, r)
+			})
 		}, flags.NpmOwners[n])
 	})
 }

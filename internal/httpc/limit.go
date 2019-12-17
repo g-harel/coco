@@ -4,25 +4,20 @@ import (
 	"time"
 )
 
-type limiter struct {
-	max    int
-	ticker chan bool
-}
-
-func newLimiter(max int) *limiter {
-	ticker := make(chan bool)
+// NewLimiter creates a channel that produces the provided
+// count of values on every delay. The limiter does not
+// compensate for time spent blocked and only waits and
+// resets the count when an entire batch has been produced
+// and consumed.
+func newLimiter(count int, delay time.Duration) chan bool {
+	limiter := make(chan bool)
 	go func() {
 		for {
-			for i := 0; i < max; i++ {
-				ticker <- true
+			for i := 0; i < count; i++ {
+				limiter <- true
 			}
-			time.Sleep(time.Second)
+			time.Sleep(delay)
 		}
 	}()
-	return &limiter{max, ticker}
-}
-
-func (l *limiter) Wait() {
-	<-l.ticker
-	return
+	return limiter
 }

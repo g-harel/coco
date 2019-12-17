@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/g-harel/coco/collectors"
 	"github.com/g-harel/coco/collectors/github"
 	"github.com/g-harel/coco/collectors/npm"
@@ -23,6 +21,6 @@ func main() {
 	})
 
 	for i := 0; i < len(c); i++ {
-		fmt.Print(c[i].Format())
+		log.Output(c[i].Format())
 	}
 }

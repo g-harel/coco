@@ -4,6 +4,7 @@ import (
 	"flag"
 )
 
+// Global list of all flags understood by the command.
 var (
 	LogInfo   = flag.Bool("log-info", false, "Log miscellaneous info.")
 	LogErrors = flag.Bool("log-error", true, "Log errors.")

@@ -12,8 +12,13 @@ import (
 )
 
 var zero = time.Now().Truncate(time.Millisecond).UnixNano() / 1e6
-var rateLimiter = newLimiter(*flags.RateLimit)
+var rateLimiter = newLimiter(*flags.RateLimit, time.Second)
 
+// LogHTTP logs a formatted version of the request with:
+// - response status code
+// - program time at which request was sent (in ms)
+// - round trip time (in ms)
+// - request URL
 func logHTTP(url *url.URL, res *http.Response, start time.Time) {
 	message := fmt.Sprintf(
 		"%v %v+%vms %v\n",
@@ -29,8 +34,11 @@ func logHTTP(url *url.URL, res *http.Response, start time.Time) {
 	}
 }
 
-func Get(rawUrl string, headers http.Header, body interface{}) (*http.Header, error) {
-	rateLimiter.Wait()
+// Get is a wrapper to make simple GET requests.
+// It abstracts away logic around rate limiting, logging,
+// response decoding and error handling.
+func Get(rawUrl string, headers http.Header, responseBody interface{}) (*http.Header, error) {
+	<-rateLimiter
 
 	u, err := url.Parse(rawUrl)
 	if err != nil {
@@ -51,7 +59,7 @@ func Get(rawUrl string, headers http.Header, body interface{}) (*http.Header, er
 		return nil, fmt.Errorf("unexpected status code %v", res.StatusCode)
 	}
 
-	err = json.NewDecoder(res.Body).Decode(body)
+	err = json.NewDecoder(res.Body).Decode(responseBody)
 	if err != nil {
 		return nil, err
 	}
