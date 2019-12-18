@@ -32,6 +32,7 @@ func (c *Collector) Format() string {
 		return ""
 	}
 	t := table.Table{}
+	t.Title("Npm package downloads")
 	t.Headers(
 		"PACKAGE",
 		"DOWNLOADS",

@@ -9,12 +9,15 @@ import (
 func TestFormat(t *testing.T) {
 	t.Run("", func(t *testing.T) {
 		tb := Table{}
+		tb.Title("test")
 		tb.Headers("TEST", "ABC", "1234")
 		tb.Add(0, "a", 1234)
 		tb.Add("aa aaaa aa aa a")
 		tb.Sort(1, 1, 12)
 		assert.Equal(t, tb.String(),
 			""+
+				"+------+\n"+
+				"| test |\n"+
 				"+-----------------+-----+-------+\n"+
 				"| TEST            | ABC | 1234  |\n"+
 				"+-----------------+-----+-------+\n"+
@@ -25,6 +28,7 @@ func TestFormat(t *testing.T) {
 
 	t.Run("", func(t *testing.T) {
 		tb := Table{}
+		tb.Title("a")
 		tb.Headers("A", "B", "C", "D")
 		tb.Add(1)
 		tb.Add(1, 1, 1)
@@ -36,6 +40,8 @@ func TestFormat(t *testing.T) {
 		tb.Sort(2, 1)
 		assert.Equal(t, tb.String(),
 			""+
+				"+---+\n"+
+				"| a |\n"+
 				"+---+---+---+---+\n"+
 				"| A | B | C | D |\n"+
 				"+---+---+---+---+\n"+

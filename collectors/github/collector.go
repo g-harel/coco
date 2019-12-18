@@ -38,6 +38,7 @@ func (c *Collector) Format() string {
 		return ""
 	}
 	t := table.Table{}
+	t.Title("GitHub repo views")
 	t.Headers(
 		"REPO",
 		"VIEWS",

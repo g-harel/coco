@@ -4,9 +4,15 @@ import ()
 
 // Table holds table data that can be sorted and printed.
 type Table struct {
+	title              string
 	headers            []interface{}
 	columnSortPriority []int
 	data               [][]interface{}
+}
+
+// Title adds a title.
+func (t *Table) Title(title string) {
+	t.title = title
 }
 
 // Headers adds column headers.
@@ -28,7 +34,9 @@ func (t *Table) Sort(columnSortPriority ...int) {
 func (t *Table) String() string {
 	columnWidths := calcColumnWidths(append(t.data, t.headers))
 	sortOrder := calcSortOrder(t.data, t.columnSortPriority)
-	formattedTable := formatHorizontalSeparator(columnWidths)
+	formattedTable := formatHorizontalSeparator([]int{len(t.title)})
+	formattedTable += formatRow([]interface{}{t.title}, []int{len(t.title)})
+	formattedTable += formatHorizontalSeparator(columnWidths)
 	formattedTable += formatRow(t.headers, columnWidths)
 	formattedTable += formatHorizontalSeparator(columnWidths)
 	for i := 0; i < len(sortOrder); i++ {

@@ -3,7 +3,6 @@
 TODO
 - add godoc/documentation
 - add example usages in readme
-- table titles
 
  -->
 
