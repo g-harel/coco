@@ -34,6 +34,9 @@ func (c *Collector) Collect(h collectors.ErrorHandler) {
 }
 
 func (c *Collector) Format() string {
+	if len(c.repos) == 0 {
+		return ""
+	}
 	t := table.Table{}
 	t.Headers(
 		"REPO",

@@ -28,6 +28,9 @@ func (c *Collector) Collect(h collectors.ErrorHandler) {
 }
 
 func (c *Collector) Format() string {
+	if len(c.packages) == 0 {
+		return ""
+	}
 	t := table.Table{}
 	t.Headers(
 		"PACKAGE",
