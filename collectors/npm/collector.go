@@ -9,10 +9,13 @@ import (
 
 var _ collectors.Collector = &Collector{}
 
+// Collector satisfies the collector interface to fetch and
+// display NPM package download info.
 type Collector struct {
 	packages []*pkg
 }
 
+// Collect fetches packages from all owners in parallel.
 func (c *Collector) Collect(h collectors.ErrorHandler) {
 	exec.ParallelN(len(flags.NpmOwners), func(n int) {
 		handleOwner(func(r *pkg, err error) {
@@ -27,6 +30,9 @@ func (c *Collector) Collect(h collectors.ErrorHandler) {
 	})
 }
 
+// Format creates a table from the collected download data.
+// It allows the shown packages to be filtered by weekly
+// downloads.
 func (c *Collector) Format() string {
 	if len(c.packages) == 0 {
 		return ""

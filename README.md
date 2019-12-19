@@ -1,7 +1,7 @@
 <!--
 
 TODO
-- add godoc/documentation
+- add documentation
 - add example usages in readme
 
  -->

@@ -8,6 +8,9 @@ import (
 	"strings"
 )
 
+// GeneratePaginatedURLs is a helper to navigate the GitHub
+// API's pagination scheme. It uses the headers from an
+// initial response to generate the remaining URLs to fetch.
 func generatePaginatedURLs(h *http.Header) ([]string, error) {
 	links := strings.Split(h.Get("Link"), ",")
 	rawLastURL := ""

@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// Repo is extracted views data.
 type repo struct {
 	Name   string
 	Owner  string
@@ -14,8 +15,11 @@ type repo struct {
 	Unique int
 }
 
+// RepoHandler accepts and handles repo views data.
 type repoHandler func(*repo, error)
 
+// ReposResponse represents the response data for a request
+// for an owner's repositories.
 type reposResponse []struct {
 	Name  string `json:"name"`
 	Owner struct {
@@ -24,6 +28,8 @@ type reposResponse []struct {
 	Stars int `json:"stargazers_count"`
 }
 
+// ViewsResponse represents the response data for a request
+// for repo views data.
 type viewsResponse struct {
 	Count   int `json:"count"`
 	Uniques int `json:"uniques"`
@@ -33,6 +39,8 @@ type viewsResponse struct {
 	} `json:"views"`
 }
 
+// Convert converts between the HTTP response and extracted
+// repo views data.
 func convert(v *viewsResponse) *repo {
 	today := 0
 	nowPrefix := time.Now().Format("2006-01-02")

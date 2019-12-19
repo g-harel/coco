@@ -7,6 +7,8 @@ import (
 	"github.com/g-harel/coco/internal/httpc"
 )
 
+// FetchGeneric is a shared wrapper that adds the GitHub
+// Authorization header to requests.
 func fetchGeneric(url, token string, body interface{}) (*http.Header, error) {
 	return httpc.Get(
 		url,
@@ -15,6 +17,11 @@ func fetchGeneric(url, token string, body interface{}) (*http.Header, error) {
 	)
 }
 
+// FetchFirstRepo fetches repo lists from the GitHub API.
+// It can only be used for the first request because the
+// pagination scheme is sent back as headers and is not
+// compatible with simply increasing the page number on this
+// URL.
 func fetchFirstRepos(token, owner string) (reposResponse, *http.Header, error) {
 	res := reposResponse{}
 	h, err := fetchGeneric(
@@ -29,6 +36,7 @@ func fetchFirstRepos(token, owner string) (reposResponse, *http.Header, error) {
 
 }
 
+// FetchViews fetches repo views data from the GitHub API.
 func fetchViews(token, owner, name string) (*viewsResponse, error) {
 	res := &viewsResponse{}
 	_, err := fetchGeneric(

@@ -7,6 +7,7 @@ import (
 	"github.com/g-harel/coco/internal/httpc"
 )
 
+// FetchOwner fetches owner data from the NPM website.
 func fetchOwner(owner string, page int) (*ownerResponse, error) {
 	res := &ownerResponse{}
 	_, err := httpc.Get(
@@ -20,6 +21,7 @@ func fetchOwner(owner string, page int) (*ownerResponse, error) {
 	return res, nil
 }
 
+// FetchPackage fetches package data from the NPM website.
 func fetchPackage(name string) (*pkgResponse, error) {
 	res := &pkgResponse{}
 	_, err := httpc.Get(

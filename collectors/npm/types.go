@@ -1,13 +1,17 @@
 package npm
 
+// Pkg is extracted package download data.
 type pkg struct {
 	Name   string
 	Weekly int
 	Total  int
 }
 
+// PkgHandler accepts and handles package download data.
 type pkgHandler func(*pkg, error)
 
+// OwnerResponse represents the response data for a request
+// for owner data.
 type ownerResponse struct {
 	Packages struct {
 		Total   int `json:"total"`
@@ -21,6 +25,8 @@ type ownerResponse struct {
 	}
 }
 
+// PkgResponse represents the response data for a request
+// for package data.
 type pkgResponse struct {
 	Package   string `json:"package"`
 	Downloads []struct {
@@ -28,6 +34,8 @@ type pkgResponse struct {
 	} `json:"downloads"`
 }
 
+// Convert converts between the HTTP response and extracted
+// package download data.
 func convert(r *pkgResponse) *pkg {
 	p := &pkg{
 		Name:   r.Package,

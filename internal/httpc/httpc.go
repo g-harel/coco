@@ -37,10 +37,10 @@ func logHTTP(url *url.URL, res *http.Response, start time.Time) {
 // Get is a wrapper to make simple GET requests.
 // It abstracts away logic around rate limiting, logging,
 // response decoding and error handling.
-func Get(rawUrl string, headers http.Header, responseBody interface{}) (*http.Header, error) {
+func Get(rawURL string, headers http.Header, responseBody interface{}) (*http.Header, error) {
 	<-rateLimiter
 
-	u, err := url.Parse(rawUrl)
+	u, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, err
 	}

@@ -11,10 +11,13 @@ import (
 
 var _ collectors.Collector = &Collector{}
 
+// Collector satisfies the collector interface to fetch and
+// display GitHub repo views info.
 type Collector struct {
 	repos []*repo
 }
 
+// Collect fetches repo data from all owners in parallel.
 func (c *Collector) Collect(h collectors.ErrorHandler) {
 	if len(flags.GithubOwners) > 0 && *flags.GithubToken == "" {
 		h(fmt.Errorf("missing github token"))
@@ -33,6 +36,9 @@ func (c *Collector) Collect(h collectors.ErrorHandler) {
 	})
 }
 
+// Format creates a table from the collected views data. It
+// allows the shown repos to be filtered by daily views,
+// total views and stars.
 func (c *Collector) Format() string {
 	if len(c.repos) == 0 {
 		return ""

@@ -6,6 +6,9 @@ import (
 	"github.com/g-harel/coco/internal/exec"
 )
 
+// HandleOwner fetches all an owner's repos and calls the
+// next handler with them. Using the first request, it reads
+// all paginated data in parallel.
 func handleOwner(f repoHandler, token, owner string) {
 	firstPage, responseHeaders, err := fetchFirstRepos(token, owner)
 	if err != nil {
@@ -36,6 +39,8 @@ func handleOwner(f repoHandler, token, owner string) {
 	)
 }
 
+// HandleReposResponse reads all repos from a single page
+// and fetches its views data.
 func handleReposResponse(f repoHandler, token string, l reposResponse) {
 	exec.ParallelN(len(l), func(n int) {
 		v, err := fetchViews(token, l[n].Owner.Login, l[n].Name)
