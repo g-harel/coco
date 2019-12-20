@@ -66,8 +66,9 @@ func (s tableDataSorter) Less(i, j int) bool {
 	iRow := s.data[s.sortOrder[i]]
 	jRow := s.data[s.sortOrder[j]]
 	for i := 0; i < len(s.columnSortPriority); i++ {
+		// Order empty values with lowest priority.
 		columnIndex := s.columnSortPriority[i]
-		if len(iRow) <= columnIndex && len(jRow) < columnIndex {
+		if len(iRow) <= columnIndex && len(jRow) <= columnIndex {
 			continue
 		}
 		if len(iRow) <= columnIndex {
@@ -76,6 +77,7 @@ func (s tableDataSorter) Less(i, j int) bool {
 		if len(jRow) <= columnIndex {
 			return true
 		}
+		// Order null values with lowest priority.
 		iValue := iRow[columnIndex]
 		jValue := jRow[columnIndex]
 		if iValue == jValue {
@@ -87,11 +89,13 @@ func (s tableDataSorter) Less(i, j int) bool {
 		if jValue == nil {
 			return true
 		}
+		// Sort integers in descending orders.
 		iNum, iNumOk := iValue.(int)
 		jNum, jNumOk := jValue.(int)
 		if iNumOk && jNumOk {
 			return iNum > jNum
 		}
+		// Fallback to comparing cell values as strings.
 		iFormatted := formatCell(iValue)
 		jFormatted := formatCell(jValue)
 		return iFormatted < jFormatted

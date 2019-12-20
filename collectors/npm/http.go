@@ -12,6 +12,8 @@ func fetchOwner(owner string, page int) (*ownerResponse, error) {
 	res := &ownerResponse{}
 	_, err := httpc.Get(
 		fmt.Sprintf("https://www.npmjs.com/~%v?page=%v", owner, page),
+		// This header makes the website respond with JSON
+		// data instead of a webpage.
 		http.Header{"x-spiferack": []string{"1"}},
 		res,
 	)
@@ -26,6 +28,8 @@ func fetchPackage(name string) (*pkgResponse, error) {
 	res := &pkgResponse{}
 	_, err := httpc.Get(
 		fmt.Sprintf("https://www.npmjs.com/package/%v", name),
+		// This header makes the website respond with JSON
+		// data instead of a webpage.
 		http.Header{"x-spiferack": []string{"1"}},
 		res,
 	)

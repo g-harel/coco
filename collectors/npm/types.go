@@ -43,6 +43,7 @@ func convert(r *pkgResponse) *pkg {
 		Total:  0,
 	}
 	if len(r.Downloads) > 0 {
+		// Most recent week is last.
 		p.Weekly = r.Downloads[len(r.Downloads)-1].Downloads
 		for i := 0; i < len(r.Downloads); i++ {
 			p.Total += r.Downloads[i].Downloads

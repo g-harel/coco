@@ -23,6 +23,7 @@ func handleOwner(f pkgHandler, owner string) {
 		func() {
 			remainingPages := firstPage.Packages.Total / firstPage.Pagination.PerPage
 			exec.ParallelN(remainingPages, func(n int) {
+				// Skip already loaded first page.
 				nthPage, err := fetchOwner(owner, n+1)
 				if err != nil {
 					f(nil, fmt.Errorf("fetch page %v: %v", n, err))

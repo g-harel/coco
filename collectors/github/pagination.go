@@ -13,6 +13,7 @@ import (
 // initial response to generate the remaining URLs to fetch.
 func generatePaginatedURLs(h *http.Header) ([]string, error) {
 	links := strings.Split(h.Get("Link"), ",")
+	// Find URL marked as last.
 	rawLastURL := ""
 	for i := 0; i < len(links); i++ {
 		if strings.HasSuffix(links[i], `>; rel="last"`) {
@@ -22,7 +23,8 @@ func generatePaginatedURLs(h *http.Header) ([]string, error) {
 		}
 	}
 	if rawLastURL == "" {
-		// Pagination header is missing when the response contains all data.
+		// Pagination header is missing when the response
+		// contains all data.
 		return []string{rawLastURL}, nil
 	}
 	lastURL, err := url.Parse(rawLastURL)
@@ -36,6 +38,7 @@ func generatePaginatedURLs(h *http.Header) ([]string, error) {
 	urls := []string{}
 	for i := 1; i <= lastPageIndex; i++ {
 		nthPageURL, _ := url.Parse(lastURL.String())
+		// Replace query's page value.
 		query := nthPageURL.Query()
 		query.Del("page")
 		query.Add("page", strconv.Itoa(i))

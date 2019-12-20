@@ -26,6 +26,7 @@ func handleOwner(f repoHandler, token, owner string) {
 				f(nil, err)
 				return
 			}
+			// Skip already loaded first page.
 			exec.ParallelN(len(pages)-1, func(n int) {
 				nthPage := reposResponse{}
 				_, err := fetchGeneric(pages[n+1], token, &nthPage)

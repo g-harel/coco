@@ -1,7 +1,6 @@
 <!--
 
 TODO
-- add documentation
 - add example usages in readme
 
  -->
