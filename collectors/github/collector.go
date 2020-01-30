@@ -44,7 +44,11 @@ func (c *Collector) Format() string {
 		return ""
 	}
 	t := table.Table{}
-	t.Title("GitHub repo views")
+	owners := ""
+	for i := 0; i < len(flags.GithubOwners); i++ {
+		owners += " " + flags.GithubOwners[i]
+	}
+	t.Title(fmt.Sprintf("GitHub repo stats |%v", owners))
 	t.Headers(
 		"REPO",
 		"VIEWS",

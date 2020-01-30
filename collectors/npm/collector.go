@@ -1,6 +1,8 @@
 package npm
 
 import (
+	"fmt"
+
 	"github.com/g-harel/coco/collectors"
 	"github.com/g-harel/coco/internal/exec"
 	"github.com/g-harel/coco/internal/flags"
@@ -38,7 +40,11 @@ func (c *Collector) Format() string {
 		return ""
 	}
 	t := table.Table{}
-	t.Title("Npm package downloads")
+	owners := ""
+	for i := 0; i < len(flags.NpmOwners); i++ {
+		owners += " " + flags.NpmOwners[i]
+	}
+	t.Title(fmt.Sprintf("Npm package downloads |%v", owners))
 	t.Headers(
 		"PACKAGE",
 		"DOWNLOADS",
