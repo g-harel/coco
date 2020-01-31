@@ -12,11 +12,12 @@ var (
 	RateLimit = flag.Int("rate-limit", 999, "Maximum number of requests per second by all collectors.")
 	StateFile = flag.String("state-file", "", "Absolute path to file used to store state between runs")
 
-	GithubOwners = multiFlag{}
-	GithubToken  = flag.String("github-token", "", "GitHub API token.")
-	GithubViews  = flag.Int("github-views", 1, "Show repos if they have this quantity of views.")
-	GithubToday  = flag.Int("github-today", 1, "Show repos if they have this quantity of views today.")
-	GithubStars  = flag.Int("github-stars", 1, "Show repos if they have this quantity of stars.")
+	GithubOwners   = multiFlag{}
+	GithubToken    = flag.String("github-token", "", "GitHub API token.")
+	GithubViews    = flag.Int("github-views", 1, "Show repos if they have this quantity of views.")
+	GithubToday    = flag.Int("github-today", 1, "Show repos if they have this quantity of views today.")
+	GithubStars    = flag.Int("github-stars", 1, "Show repos if they have this quantity of stars.")
+	GithubNewStars = flag.Int("github-new-stars", 1, "Show repos if they have this quantity of new stars")
 
 	NpmOwners = multiFlag{}
 	NpmWeekly = flag.Int("npm-weekly", 1, "Show repos if they have this quantity of weekly downloads.")

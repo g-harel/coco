@@ -2,10 +2,12 @@ package github
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/g-harel/coco/collectors"
 	"github.com/g-harel/coco/internal/exec"
 	"github.com/g-harel/coco/internal/flags"
+	"github.com/g-harel/coco/internal/state"
 	"github.com/g-harel/coco/internal/table"
 )
 
@@ -56,21 +58,25 @@ func (c *Collector) Format() string {
 		"TODAY",
 		"LINK",
 	)
+	storedData := state.NewFromFile(*flags.StateFile)
 	for i := 0; i < len(c.repos); i++ {
 		r := c.repos[i]
+		url := fmt.Sprintf("https://github.com/%v/%v/graphs/traffic", r.Owner, r.Name)
+		newStars := r.Stars - storedData.ReadIntOr(url, 0)
+		storedData.Write(url, strconv.Itoa(r.Stars))
 		if r.Today < *flags.GithubToday &&
 			r.Views < *flags.GithubViews &&
-			r.Stars < *flags.GithubStars {
+			r.Stars < *flags.GithubStars &&
+			newStars < *flags.GithubNewStars {
 			continue
 		}
-		t.Add(
-			fmt.Sprintf("%v*%v", r.Name, r.Stars),
-			r.Views,
-			r.Unique,
-			r.Today,
-			fmt.Sprintf("https://github.com/%v/%v/graphs/traffic", r.Owner, r.Name),
-		)
+		name := r.Name
+		if newStars > 0 {
+			name += fmt.Sprintf("+%v", newStars)
+		}
+		t.Add(name, r.Views, r.Unique, r.Today, url)
 	}
+	storedData.Save()
 	t.Sort(1, 3, 2)
 	return t.String()
 }
