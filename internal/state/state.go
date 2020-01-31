@@ -4,17 +4,18 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"strconv"
 
 	"github.com/g-harel/coco/internal/log"
 )
 
 type State struct {
 	path     string
-	contents map[string]map[string]string
+	contents map[string]string
 }
 
 func NewFromFile(path string) State {
-	data := map[string]map[string]string{}
+	data := map[string]string{}
 	if path != "" {
 		file, err := ioutil.ReadFile(path)
 		if err == nil {
@@ -43,14 +44,23 @@ func (s *State) Save() {
 	}
 }
 
-func (s *State) Read(namespace, key string) (value string, ok bool) {
-	value, ok = s.contents[namespace][key]
+func (s *State) Read(key string) (value string, ok bool) {
+	value, ok = s.contents[key]
 	return
 }
 
-func (s *State) Write(namespace, key, value string) {
-	if _, ok := s.contents[namespace]; !ok {
-		s.contents[namespace] = map[string]string{}
+func (s *State) ReadIntOr(key string, fallback int) int {
+	str, readOk := s.Read(key)
+	if !readOk {
+		return fallback
 	}
-	s.contents[namespace][key] = value
+	num, err := strconv.Atoi(str)
+	if err != nil {
+		return fallback
+	}
+	return num
+}
+
+func (s *State) Write(key, value string) {
+	s.contents[key] = value
 }

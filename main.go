@@ -5,9 +5,7 @@ import (
 	"github.com/g-harel/coco/collectors/github"
 	"github.com/g-harel/coco/collectors/npm"
 	"github.com/g-harel/coco/internal/exec"
-	"github.com/g-harel/coco/internal/flags"
 	"github.com/g-harel/coco/internal/log"
-	"github.com/g-harel/coco/internal/state"
 )
 
 func main() {
@@ -25,6 +23,4 @@ func main() {
 	for i := 0; i < len(c); i++ {
 		log.Output(c[i].Format())
 	}
-
-	state.NewFromFile(*flags.StateFile)
 }
