@@ -49,3 +49,16 @@ func fetchViews(token, owner, name string) (*viewsResponse, error) {
 	}
 	return res, nil
 }
+
+func fetchUser(token, user string) (*userResponse, error) {
+	res := &userResponse{}
+	_, err := fetchGeneric(
+		fmt.Sprintf("https://api.github.com/users/%v", user),
+		token,
+		res,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("fetch user info %v: %v", user, err)
+	}
+	return res, nil
+}

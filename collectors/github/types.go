@@ -39,6 +39,13 @@ type viewsResponse struct {
 	} `json:"views"`
 }
 
+// UserResponse represents the response data from a request
+// for user information.
+type userResponse struct {
+	Login     string `json:"login"`
+	Followers int    `json:"followers"`
+}
+
 // Convert converts between the HTTP response and extracted
 // repo views data.
 func convert(v *viewsResponse) *repo {

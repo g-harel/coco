@@ -39,18 +39,22 @@ func (c *Collector) Format() string {
 	if len(c.packages) == 0 {
 		return ""
 	}
+
 	t := table.Table{}
+
 	owners := ""
 	for i := 0; i < len(flags.NpmOwners); i++ {
 		owners += " " + flags.NpmOwners[i]
 	}
 	t.Title(fmt.Sprintf("Npm package downloads |%v", owners))
+
 	t.Headers(
 		"PACKAGE",
 		"DOWNLOADS",
 		"TOTAL",
 		"LINK",
 	)
+
 	for i := 0; i < len(c.packages); i++ {
 		p := c.packages[i]
 		if p.Weekly < *flags.NpmWeekly {
@@ -66,5 +70,6 @@ func (c *Collector) Format() string {
 
 	}
 	t.Sort(1, 2)
+
 	return t.String()
 }
