@@ -12,6 +12,8 @@ $ go get -u github.com/g-harel/coco
 Usage: coco [flags...]
 
 Flags:
+  -github-new-stars int
+        Show repos if they have this quantity of new stars (default 1)
   -github-owner value
         GitHub owner to query.
   -github-stars int
@@ -32,9 +34,13 @@ Flags:
         Show repos if they have this quantity of weekly downloads. (default 1)
   -rate-limit int
         Maximum number of requests per second by all collectors. (default 999)
+  -state-file string
+        Absolute path to file used to store state between runs
 ```
 
 _GitHub traffic can only be collected from repositories that the token grants push access to._
+
+_Quantity of new stars can only be accurately shown if a state file is provided._
 
 _A single run can collect data from both GitHub and NPM._
 
@@ -62,6 +68,7 @@ coco -npm-owner=<owner>
 coco \
     -log-info \
     -rate-limit=42 \
+    -state-file="/home/me/.coco" \
     -github-token=<token> \
     -github-owner=<user> \
     -github-owner=<org> \
@@ -73,29 +80,29 @@ coco \
 ```
 
 ```
-+-------------------+
-| GitHub repo views |
++----------------------------------+
+| GitHub repo stats | <user> <org> |
 +--------------------------+-------+--------+-------+------------------------------------------------------------------+
 | REPO                     | VIEWS | UNIQUE | TODAY | LINK                                                             |
 +--------------------------+-------+--------+-------+------------------------------------------------------------------+
-| blobs*34                 |   131 |     18 |     0 | https://github.com/g-harel/blobs/graphs/traffic                  |
-| npmfs*83                 |    19 |     10 |     0 | https://github.com/g-harel/npmfs/graphs/traffic                  |
-| superpermutations*1      |    16 |      6 |     3 | https://github.com/g-harel/superpermutations/graphs/traffic      |
-| SOEN321*0                |    10 |      3 |     0 | https://github.com/g-harel/SOEN321/graphs/traffic                |
-| coco*2                   |     7 |      3 |     1 | https://github.com/g-harel/coco/graphs/traffic                   |
-| targetblank*5            |     7 |      3 |     0 | https://github.com/g-harel/targetblank/graphs/traffic            |
-| rickety*9                |     5 |      5 |     1 | https://github.com/g-harel/rickety/graphs/traffic                |
-| okwolo*21                |     5 |      3 |     0 | https://github.com/okwolo/okwolo/graphs/traffic                  |
-| cards-amusing-humanity*1 |     4 |      2 |     0 | https://github.com/g-harel/cards-amusing-humanity/graphs/traffic |
-| svgsaurus*6              |     3 |      3 |     0 | https://github.com/g-harel/svgsaurus/graphs/traffic              |
-| sekstant*56              |     2 |      2 |     0 | https://github.com/g-harel/sekstant/graphs/traffic               |
-| website*10               |     2 |      2 |     0 | https://github.com/g-harel/website/graphs/traffic                |
-| ence*8                   |     0 |      0 |     0 | https://github.com/g-harel/ence/graphs/traffic                   |
-| open-source-logos*3      |     0 |      0 |     0 | https://github.com/g-harel/open-source-logos/graphs/traffic      |
-| slurry*5                 |     0 |      0 |     0 | https://github.com/g-harel/slurry/graphs/traffic                 |
+| blobs+34                 |   131 |     18 |     0 | https://github.com/g-harel/blobs/graphs/traffic                  |
+| npmfs+83                 |    19 |     10 |     0 | https://github.com/g-harel/npmfs/graphs/traffic                  |
+| superpermutations+1      |    16 |      6 |     3 | https://github.com/g-harel/superpermutations/graphs/traffic      |
+| SOEN321+0                |    10 |      3 |     0 | https://github.com/g-harel/SOEN321/graphs/traffic                |
+| coco+2                   |     7 |      3 |     1 | https://github.com/g-harel/coco/graphs/traffic                   |
+| targetblank+5            |     7 |      3 |     0 | https://github.com/g-harel/targetblank/graphs/traffic            |
+| rickety+9                |     5 |      5 |     1 | https://github.com/g-harel/rickety/graphs/traffic                |
+| okwolo+21                |     5 |      3 |     0 | https://github.com/okwolo/okwolo/graphs/traffic                  |
+| cards-amusing-humanity+1 |     4 |      2 |     0 | https://github.com/g-harel/cards-amusing-humanity/graphs/traffic |
+| svgsaurus+6              |     3 |      3 |     0 | https://github.com/g-harel/svgsaurus/graphs/traffic              |
+| sekstant+56              |     2 |      2 |     0 | https://github.com/g-harel/sekstant/graphs/traffic               |
+| website+10               |     2 |      2 |     0 | https://github.com/g-harel/website/graphs/traffic                |
+| ence+8                   |     0 |      0 |     0 | https://github.com/g-harel/ence/graphs/traffic                   |
+| open-source-logos+3      |     0 |      0 |     0 | https://github.com/g-harel/open-source-logos/graphs/traffic      |
+| slurry+5                 |     0 |      0 |     0 | https://github.com/g-harel/slurry/graphs/traffic                 |
 +--------------------------+-------+--------+-------+------------------------------------------------------------------+
-+-----------------------+
-| Npm package downloads |
++--------------------------------+
+| Npm package downloads | <user> |
 +---------+-----------+-------+-----------------------------------+
 | PACKAGE | DOWNLOADS | TOTAL | LINK                              |
 +---------+-----------+-------+-----------------------------------+
