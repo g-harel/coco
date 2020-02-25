@@ -10,7 +10,7 @@ var (
 	LogErrors = flag.Bool("log-error", true, "Log errors.")
 
 	RateLimit = flag.Int("rate-limit", 999, "Maximum number of requests per second by all collectors.")
-	StateFile = flag.String("state-file", "", "Absolute path to file used to store state between runs")
+	StateFile = flag.String("state-file", "", "Absolute path to file used to store state between runs.")
 
 	GithubOwners   = multiFlag{}
 	GithubToken    = flag.String("github-token", "", "GitHub API token.")

@@ -35,7 +35,7 @@ Flags:
   -rate-limit int
         Maximum number of requests per second by all collectors. (default 999)
   -state-file string
-        Absolute path to file used to store state between runs
+        Absolute path to file used to store state between runs.
 ```
 
 _GitHub traffic can only be collected from repositories that the token grants push access to._
